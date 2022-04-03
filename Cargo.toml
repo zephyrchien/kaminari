@@ -1,0 +1,18 @@
+[package]
+name = "kaminari"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lightws = "0.4.3"
+tokio = {version = "1", features = ["full"] }
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
