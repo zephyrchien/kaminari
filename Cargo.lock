@@ -42,6 +42,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "cmd"
+version = "0.1.0"
+dependencies = [
+ "lightws",
+ "tokio",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -109,10 +117,6 @@ checksum = "9100414882e15fb7feccb4897e5f0ff0ff1ca7d1a86a23208ada4d7a18e6c6c4"
 [[package]]
 name = "kaminari"
 version = "0.1.0"
-dependencies = [
- "lightws",
- "tokio",
-]
 
 [[package]]
 name = "libc"
@@ -122,9 +126,9 @@ checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
 
 [[package]]
 name = "lightws"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2504e58e4f149fd9a4a7c14e7025d6528a4cf1d754d8bf703f37e587396301c8"
+checksum = "66e424dd117d0a4123a6d6b11fa74bfd7c8d7adde73b150308ba97e8f55204f9"
 dependencies = [
  "base64",
  "cfg-if",
