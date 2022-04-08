@@ -8,8 +8,8 @@ use super::tls::{TlsClientConf, TlsServerConf, TlsAccept, TlsConnect};
 
 // ========== client ==========
 pub struct MixClientConf {
-    ws: Option<WsConf>,
-    tls: Option<TlsClientConf>,
+    pub ws: Option<WsConf>,
+    pub tls: Option<TlsClientConf>,
 }
 
 pub enum MixConnect {
@@ -54,8 +54,8 @@ impl<'a, S: IOStream> AsyncConnect<'a, S> for MixConnect {
 
 // ========== server ==========
 pub struct MixServerConf {
-    ws: Option<WsConf>,
-    tls: Option<TlsServerConf>,
+    pub ws: Option<WsConf>,
+    pub tls: Option<TlsServerConf>,
 }
 
 pub enum MixAccept {

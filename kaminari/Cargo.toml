@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 keywords = ["lightws", "network"]
 repository = "https://github.com/zephyrchien/kaminari"
