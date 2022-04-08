@@ -1,13 +1,15 @@
 use std::io::Result;
 use tokio::net::{TcpListener, TcpStream};
 
-use lightws::endpoint::Endpoint;
-use lightws::role::Server;
-
 const LOCAL: &str = "127.0.0.1:20000";
 const REMOTE: &str = "127.0.0.1:30000";
 const PATH: &str = "/ws";
 const HOST: &str = "www.example.com";
+
+use kaminari::mix::{MixAccept, MixServerConf};
+use kaminari::AsyncAccept;
+use kaminari::ws::WsConf;
+use kaminari::tls::TlsServerConf;
 
 #[tokio::main]
 async fn main() {
@@ -19,10 +21,18 @@ async fn main() {
 }
 
 async fn relay(local: TcpStream) -> Result<()> {
-    let mut buf = [0; 256];
-    let mut local = Endpoint::<_, Server>::accept_async(local, &mut buf, HOST, PATH)
-        .await?
-        .guard();
+    let server = MixAccept::new(MixServerConf {
+        ws: Some(WsConf {
+            host: String::from(HOST),
+            path: String::from(PATH),
+        }),
+        tls: Some(TlsServerConf {
+            crt: String::new(),
+            key: String::new(),
+            server_name: String::from("some"),
+        }),
+    });
+    let mut local = server.accept(local).await?;
     let mut remote = TcpStream::connect(REMOTE).await?;
 
     tokio::io::copy_bidirectional(&mut local, &mut remote).await?;
