@@ -14,12 +14,14 @@ pub use tokio_rustls::client::TlsStream as TlsClientStream;
 pub use tokio_rustls::server::TlsStream as TlsServerStream;
 
 // ========== client ==========
+#[derive(Debug, Clone)]
 pub struct TlsClientConf {
     pub sni: String,
     pub insecure: bool,
     pub early_data: bool,
 }
 
+#[derive(Clone)]
 pub struct TlsConnect<T> {
     conn: T,
     sni: ServerName,
@@ -28,7 +30,11 @@ pub struct TlsConnect<T> {
 
 impl<T> TlsConnect<T> {
     pub fn new(conn: T, conf: TlsClientConf) -> Self {
-        let TlsClientConf{ sni, insecure, early_data } = conf;
+        let TlsClientConf {
+            sni,
+            insecure,
+            early_data,
+        } = conf;
         let sni: ServerName = sni.as_str().try_into().expect("invalid DNS name");
 
         let mut conf = if !insecure {
@@ -72,12 +78,14 @@ where
 }
 
 // ========== server ==========
+#[derive(Debug, Clone)]
 pub struct TlsServerConf {
     pub crt: String,
     pub key: String,
     pub server_name: String,
 }
 
+#[derive(Clone)]
 pub struct TlsAccept<T> {
     lis: T,
     ac: TlsAcceptor,

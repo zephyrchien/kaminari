@@ -7,11 +7,13 @@ use super::ws::{WsConf, WsAccept, WsConnect};
 use super::tls::{TlsClientConf, TlsServerConf, TlsAccept, TlsConnect};
 
 // ========== client ==========
+#[derive(Debug, Clone)]
 pub struct MixClientConf {
     pub ws: Option<WsConf>,
     pub tls: Option<TlsClientConf>,
 }
 
+#[derive(Clone)]
 pub enum MixConnect {
     Plain(NopConnect),
     Ws(WsConnect<NopConnect>),
@@ -53,11 +55,13 @@ impl<'a, S: IOStream> AsyncConnect<'a, S> for MixConnect {
 }
 
 // ========== server ==========
+#[derive(Debug, Clone)]
 pub struct MixServerConf {
     pub ws: Option<WsConf>,
     pub tls: Option<TlsServerConf>,
 }
 
+#[derive(Clone)]
 pub enum MixAccept {
     Plain(NopAccept),
     Ws(WsAccept<NopAccept>),
@@ -107,6 +111,7 @@ mod stream {
     use crate::ws::{WsClientStream, WsServerStream};
     use crate::tls::{TlsClientStream, TlsServerStream};
 
+    #[derive(Debug)]
     pub enum MixClientStream<T> {
         Plain(T),
         Ws(WsClientStream<T>),
@@ -114,6 +119,7 @@ mod stream {
         Wss(WsClientStream<TlsClientStream<T>>),
     }
 
+    #[derive(Debug)]
     pub enum MixServerStream<T> {
         Plain(T),
         Ws(WsServerStream<T>),

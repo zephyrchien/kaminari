@@ -3,8 +3,10 @@ use std::future::Future;
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
+#[derive(Clone, Copy)]
 pub struct NopConnect {}
 
+#[derive(Clone, Copy)]
 pub struct NopAccept {}
 
 impl<'a, S> AsyncConnect<'a, S> for NopConnect
