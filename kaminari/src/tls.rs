@@ -17,6 +17,7 @@ pub use tokio_rustls::server::TlsStream as TlsServerStream;
 pub struct TlsClientConf {
     pub sni: String,
     pub insecure: bool,
+    pub early_data: bool,
 }
 
 pub struct TlsConnect<T> {
@@ -27,9 +28,10 @@ pub struct TlsConnect<T> {
 
 impl<T> TlsConnect<T> {
     pub fn new(conn: T, conf: TlsClientConf) -> Self {
-        let sni: ServerName = conf.sni.as_str().try_into().expect("invalid DNS name");
+        let TlsClientConf{ sni, insecure, early_data } = conf;
+        let sni: ServerName = sni.as_str().try_into().expect("invalid DNS name");
 
-        let conf = if !conf.insecure {
+        let mut conf = if !insecure {
             ClientConfig::builder()
                 .with_safe_defaults()
                 .with_root_certificates(utils::firefox_roots())
@@ -40,6 +42,8 @@ impl<T> TlsConnect<T> {
                 .with_custom_certificate_verifier(Arc::new(utils::SkipVerify {}))
                 .with_no_client_auth()
         };
+
+        conf.enable_early_data = early_data;
 
         Self {
             conn,
