@@ -25,3 +25,4 @@ pub mod ws;
 pub mod nop;
 pub mod tls;
 pub mod mix;
+pub mod opt;
