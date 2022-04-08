@@ -10,7 +10,7 @@ use lightws::stream::{Guarded, Stream};
 pub type WsClientStream<T> = Stream<T, Client, Guarded>;
 pub type WsServerStream<T> = Stream<T, Server, Guarded>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WsConf {
     pub host: String,
     pub path: String,

@@ -14,7 +14,7 @@ pub use tokio_rustls::client::TlsStream as TlsClientStream;
 pub use tokio_rustls::server::TlsStream as TlsServerStream;
 
 // ========== client ==========
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TlsClientConf {
     pub sni: String,
     pub insecure: bool,
@@ -78,7 +78,7 @@ where
 }
 
 // ========== server ==========
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TlsServerConf {
     pub crt: String,
     pub key: String,
