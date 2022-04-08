@@ -2,7 +2,15 @@
 name = "kaminari"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["lightws", "network"]
+repository = "https://github.com/zephyrchien/kaminari"
+description = "The ever fast websocket tunnel built on top of lightws."
+license = "MIT"
 
 [dependencies]
+lightws = "0.4.4"
+tokio = "1"
+tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_configuration"] }
+webpki-roots = "0.22.3"
+rustls-pemfile = "0.3"
+rcgen = "0.9"
