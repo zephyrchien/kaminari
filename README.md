@@ -4,11 +4,9 @@ The ever fast websocket tunnel built on top of [lightws](https://github.com/zeph
 
 ## Intro
 
-- Client side accepts tcp and sends [tcp/ws/tls/wss].
+- Client side receives tcp then sends [tcp/ws/tls/wss].
 
-- Server side accepts [tcp/ws/tls/wss] and sends tcp.
-
-- Options for tcp/ws/tls/wss are defined in the 3rd argument.
+- Server side receives [tcp/ws/tls/wss] then sends tcp.
 
 - Compatible with shadowsocks [SIP003 plugin](https://shadowsocks.org/en/wiki/Plugin.html).
 
@@ -26,7 +24,7 @@ The ever fast websocket tunnel built on top of [lightws](https://github.com/zeph
 
 ## Usage
 
-Command line:
+Standalone:
 
 ```shell
 kaminaric <local_addr> <remote_addr> <options>
@@ -52,9 +50,9 @@ use `ws` to enable websocket.
 
 Client or server side options:
 
-- `host=<host>`: set http host
+- `host=<host>`: set http host.
 
-- `path=<path>`: set http path
+- `path=<path>`: set http path.
 
 ### TLS Options
 
@@ -62,15 +60,17 @@ use `tls` to enable tls.
 
 Client side options:
 
-- `sni=<sni>`: set sni
+- `sni=<sni>`: set sni.
 
-- `insecure`: skip server cert verification
+- `0rtt`: enable early data.
+
+- `insecure`: skip server cert verification.
 
 Server side options:
 
-- `key=<path/to/key>`: private key path
+- `key=<path/to/key>`: private key path.
 
-- `cert=<path/to/cert>`: certificate path
+- `cert=<path/to/cert>`: certificate path.
 
 - `servername=<name>`: generate self signed cert/key, use $name as CN.
 
