@@ -1,0 +1,97 @@
+name: release
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: false
+            file-ext: ""
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+            file-ext: ""
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+            file-ext: .exe
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            cross: true
+            file-ext: .exe
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+            file-ext: ""
+          - target: x86_64-linux-android
+            os: ubuntu-latest
+            cross: true
+            file-ext: ""
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+            file-ext: ""
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+            file-ext: ""
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: true
+            file-ext: ""
+          - target: aarch64-linux-android
+            os: ubuntu-latest
+            cross: true
+            file-ext: ""
+          - target: aarch64-apple-ios
+            os: macos-latest
+            cross: true
+            file-ext: ""
+          - arch-name: arm-linux-gnueabihf
+            os: ubuntu-latest
+            target: arm-unknown-linux-gnueabihf
+            cross: true
+            file-ext: ""
+          - arch-name: armv7-linux-musleabihf
+            os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            cross: true
+            file-ext: ""
+          - arch-name: armv7-android
+            os: ubuntu-latest
+            target: armv7-linux-androideabi
+            cross: true
+            file-ext: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: ${{ matrix.target }}
+          override: true
+      - name: build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.cross }}
+          command: build
+          args: --release -p kaminari-cmd --target=${{ matrix.target }}
+      - name: pack
+        run: |
+          mkdir -p release-${{ matrix.target }}
+          tar -C target/${{ matrix.target }}/release -zcv kaminari.tar.gz kaminaris$${{ matrix.file-ext }} kaminaric$${{ matrix.file-ext }}
+          cd release-${{ matrix.target }}
+          openssl dgst -sha256 -r kaminari-${{ matrix.target }}.tar.gz > kaminari-${{ matrix.target }}.sha256
+
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-${{ matrix.target }}/*
