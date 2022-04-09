@@ -2,7 +2,7 @@
 
 The ever fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
 
-## Feature
+## Intro
 
 - Client side accepts tcp and sends [tcp/ws/tls/wss].
 
