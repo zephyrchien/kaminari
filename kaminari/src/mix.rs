@@ -34,12 +34,12 @@ impl MixConnect {
     }
 }
 
-impl<'a, S: IOStream> AsyncConnect<'a, S> for MixConnect {
+impl<S: IOStream> AsyncConnect<S> for MixConnect {
     type Stream = stream::MixClientStream<S>;
 
-    type ConnectFut = impl Future<Output = Result<Self::Stream>>;
+    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&'a self, stream: S) -> Self::ConnectFut {
+    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
         use MixConnect::*;
         use stream::MixClientStream as MixS;
 
@@ -82,12 +82,12 @@ impl MixAccept {
     }
 }
 
-impl<'a, S: IOStream> AsyncAccept<'a, S> for MixAccept {
+impl<S: IOStream> AsyncAccept<S> for MixAccept {
     type Stream = stream::MixServerStream<S>;
 
-    type AcceptFut = impl Future<Output = Result<Self::Stream>>;
+    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&'a self, stream: S) -> Self::AcceptFut {
+    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
         use MixAccept::*;
         use stream::MixServerStream as MixS;
 

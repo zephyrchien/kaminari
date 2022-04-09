@@ -9,16 +9,20 @@ pub trait IOStream: AsyncRead + AsyncWrite + Unpin + 'static {}
 
 impl<T> IOStream for T where T: AsyncRead + AsyncWrite + Unpin + 'static {}
 
-pub trait AsyncConnect<'a, S: IOStream> {
+pub trait AsyncConnect<S: IOStream> {
     type Stream: IOStream;
-    type ConnectFut: Future<Output = Result<Self::Stream>>;
-    fn connect(&'a self, stream: S) -> Self::ConnectFut;
+    type ConnectFut<'a>: Future<Output = Result<Self::Stream>>
+    where
+        Self: 'a;
+    fn connect(&self, stream: S) -> Self::ConnectFut<'_>;
 }
 
-pub trait AsyncAccept<'a, S: IOStream> {
+pub trait AsyncAccept<S: IOStream> {
     type Stream: IOStream;
-    type AcceptFut: Future<Output = Result<Self::Stream>>;
-    fn accept(&'a self, stream: S) -> Self::AcceptFut;
+    type AcceptFut<'a>: Future<Output = Result<Self::Stream>>
+    where
+        Self: 'a;
+    fn accept(&self, stream: S) -> Self::AcceptFut<'_>;
 }
 
 pub mod ws;

@@ -27,16 +27,16 @@ impl<T> WsConnect<T> {
     pub const fn new(conn: T, conf: WsConf) -> Self { Self { conn, conf } }
 }
 
-impl<'a, S, T> AsyncConnect<'a, S> for WsConnect<T>
+impl<S, T> AsyncConnect<S> for WsConnect<T>
 where
     S: IOStream,
-    T: AsyncConnect<'a, S>,
+    T: AsyncConnect<S>,
 {
     type Stream = WsClientStream<T::Stream>;
 
-    type ConnectFut = impl Future<Output = Result<Self::Stream>>;
+    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&'a self, stream: S) -> Self::ConnectFut {
+    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
         async move {
             let mut buf = [0u8; 256];
             let stream = self.conn.connect(stream).await?;
@@ -65,16 +65,16 @@ impl<T> WsAccept<T> {
     pub const fn new(lis: T, conf: WsConf) -> Self { Self { lis, conf } }
 }
 
-impl<'a, S, T> AsyncAccept<'a, S> for WsAccept<T>
+impl<S, T> AsyncAccept<S> for WsAccept<T>
 where
     S: IOStream,
-    T: AsyncAccept<'a, S>,
+    T: AsyncAccept<S>,
 {
     type Stream = WsServerStream<T::Stream>;
 
-    type AcceptFut = impl Future<Output = Result<Self::Stream>>;
+    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&'a self, stream: S) -> Self::AcceptFut {
+    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
         async move {
             let mut buf = [0u8; 512];
             let stream = self.lis.accept(stream).await?;

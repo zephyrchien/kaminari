@@ -9,24 +9,24 @@ pub struct NopConnect {}
 #[derive(Clone, Copy)]
 pub struct NopAccept {}
 
-impl<'a, S> AsyncConnect<'a, S> for NopConnect
+impl<S> AsyncConnect<S> for NopConnect
 where
     S: IOStream,
 {
     type Stream = S;
 
-    type ConnectFut = impl Future<Output = Result<Self::Stream>>;
+    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&'a self, stream: S) -> Self::ConnectFut { async move { Ok(stream) } }
+    fn connect(&self, stream: S) -> Self::ConnectFut<'_> { async move { Ok(stream) } }
 }
 
-impl<'a, S> AsyncAccept<'a, S> for NopAccept
+impl<S> AsyncAccept<S> for NopAccept
 where
     S: IOStream,
 {
     type Stream = S;
 
-    type AcceptFut = impl Future<Output = Result<Self::Stream>>;
+    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&'a self, stream: S) -> Self::AcceptFut { async move { Ok(stream) } }
+    fn accept(&self, stream: S) -> Self::AcceptFut<'_> { async move { Ok(stream) } }
 }

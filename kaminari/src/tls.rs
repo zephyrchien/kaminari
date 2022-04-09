@@ -59,16 +59,16 @@ impl<T> TlsConnect<T> {
     }
 }
 
-impl<'a, S, T> AsyncConnect<'a, S> for TlsConnect<T>
+impl<S, T> AsyncConnect<S> for TlsConnect<T>
 where
     S: IOStream,
-    T: AsyncConnect<'a, S>,
+    T: AsyncConnect<S>,
 {
     type Stream = TlsClientStream<T::Stream>;
 
-    type ConnectFut = impl Future<Output = Result<Self::Stream>>;
+    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&'a self, stream: S) -> Self::ConnectFut {
+    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
         async move {
             let sni = self.sni.clone();
             let stream = self.conn.connect(stream).await?;
@@ -118,16 +118,16 @@ impl<T> TlsAccept<T> {
     }
 }
 
-impl<'a, S, T> AsyncAccept<'a, S> for TlsAccept<T>
+impl<S, T> AsyncAccept<S> for TlsAccept<T>
 where
     S: IOStream,
-    T: AsyncAccept<'a, S>,
+    T: AsyncAccept<S>,
 {
     type Stream = TlsServerStream<T::Stream>;
 
-    type AcceptFut = impl Future<Output = Result<Self::Stream>>;
+    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&'a self, stream: S) -> Self::AcceptFut {
+    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
         async move {
             let stream = self.lis.accept(stream).await?;
             self.ac.accept(stream).await
