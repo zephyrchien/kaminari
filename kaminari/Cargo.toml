@@ -2,6 +2,7 @@
 name = "kaminari"
 version = "0.3.0"
 edition = "2021"
+authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
 repository = "https://github.com/zephyrchien/kaminari"
 description = "The ever fast websocket tunnel built on top of lightws."

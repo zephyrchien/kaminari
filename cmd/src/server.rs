@@ -8,7 +8,7 @@ use kaminari::nop::NopAccept;
 use kaminari::ws::WsAccept;
 use kaminari::tls::TlsAccept;
 
-use cmd::{Endpoint, parse_cmd, parse_env};
+use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
 
 #[tokio::main]

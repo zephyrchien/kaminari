@@ -8,7 +8,7 @@ use kaminari::nop::NopConnect;
 use kaminari::ws::WsConnect;
 use kaminari::tls::TlsConnect;
 
-use cmd::{Endpoint, parse_cmd, parse_env};
+use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
 
 #[tokio::main]

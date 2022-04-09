@@ -1,10 +1,13 @@
 [package]
-name = "cmd"
+name = "kaminari-cmd"
 version = "0.1.0"
 edition = "2021"
+authors = ["zephyr <i@zephyr.moe>"]
+repository = "https://github.com/zephyrchien/kaminari/cmd"
+license = "GPLv3"
 
 [dependencies]
-kaminari = { path = "../kaminari" }
+kaminari = "0.3.0"
 tokio = {version = "1", features = ["full"] }
 anyhow = "1"
 
