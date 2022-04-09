@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-kaminari = "0.1.1"
+kaminari = { path = "../kaminari" }
 tokio = {version = "1", features = ["full"] }
+anyhow = "1"
 
 [[bin]]
-name = "client"
+name = "kaminaric"
 path = "src/client.rs"
 
 [[bin]]
-name = "server"
+name = "kaminaris"
 path = "src/server.rs"
