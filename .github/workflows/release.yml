@@ -88,7 +88,7 @@ jobs:
         run: |
           mkdir -p release-${{ matrix.target }}
           cd release-${{ matrix.target }}
-          tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris kaminaric
+          tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris${{ matrix.file-ext }} kaminaric${{ matrix.file-ext }}
           openssl dgst -sha256 -r kaminari-${{ matrix.target }}.tar.gz > kaminari-${{ matrix.target }}.sha256
 
       - name: release
