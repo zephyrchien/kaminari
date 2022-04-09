@@ -3,7 +3,7 @@ use super::tls::{TlsClientConf, TlsServerConf};
 
 macro_rules! has {
     ($it: expr, $name: expr) => {
-        $it.find(|kv| kv.starts_with($name)).is_some()
+        $it.find(|&kv| kv == $name).is_some()
     };
 }
 
@@ -18,6 +18,10 @@ macro_rules! get {
 
 pub fn get_ws_conf(s: &str) -> Option<WsConf> {
     let it = s.split(';').map(|x| x.trim());
+
+    if !has!(it.clone(), "ws") {
+        return None;
+    }
 
     let host = get!(it.clone(), "host");
     let path = get!(it.clone(), "path");
@@ -35,6 +39,10 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
 pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     let it = s.split(';').map(|x| x.trim());
 
+    if !has!(it.clone(), "tls") {
+        return None;
+    }
+
     let sni = get!(it.clone(), "sni");
     let insecure = has!(it.clone(), "insecure");
     let early_data = has!(it.clone(), "0rtt");
@@ -48,6 +56,10 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
 
 pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
     let it = s.split(';').map(|x| x.trim());
+
+    if !has!(it.clone(), "tls") {
+        return None;
+    }
 
     let crt = get!(it.clone(), "cert");
     let key = get!(it.clone(), "key");
@@ -90,21 +102,22 @@ mod test {
         }
 
         n![
-            "",
-            "host",
-            "host=",
-            "host=;",
-            "host=a.b.c;",
-            "host=a.b.c;path",
-            "host=a.b.c;path=",
-            "host=a.b.c;path=;",
+            "ws",
+            "ws;",
+            "ws;host",
+            "ws;host=",
+            "ws;host=;",
+            "ws;host=a.b.c;",
+            "ws;host=a.b.c;path",
+            "ws;host=a.b.c;path=",
+            "ws;host=a.b.c;path=;",
         ];
 
         y![
-            ("host=a.b.c;path=/", "a.b.c", "/");
-            ("host=a.b.c;path=/abc", "a.b.c", "/abc");
-            ("path=/abc;host=a.b.c", "a.b.c", "/abc");
-            ("path=/abc;host=a.b.c;", "a.b.c", "/abc");
+            ("ws;host=a.b.c;path=/", "a.b.c", "/");
+            ("ws;host=a.b.c;path=/abc", "a.b.c", "/abc");
+            ("ws;path=/abc;host=a.b.c", "a.b.c", "/abc");
+            ("ws;path=/abc;host=a.b.c;", "a.b.c", "/abc");
         ];
     }
 
@@ -130,15 +143,15 @@ mod test {
             }
         }
 
-        n!["", "sni", "sni=", "sni=;",];
+        n!["", "tls", "tls;", "tls;sni", "tls;sni=", "tls;sni=;",];
 
         y![
-            ("sni=a.b.c", "a.b.c", false, false);
-            ("sni=a.b.c;", "a.b.c", false, false);
-            ("sni=a.b.c;insecure", "a.b.c", true, false);
-            ("sni=a.b.c;insecure;", "a.b.c", true, false);
-            ("sni=a.b.c;insecure;0rtt", "a.b.c", true, true);
-            ("sni=a.b.c;insecure;0rtt;", "a.b.c", true, true);
+            ("tls;sni=a.b.c", "a.b.c", false, false);
+            ("tls;sni=a.b.c;", "a.b.c", false, false);
+            ("tls;sni=a.b.c;insecure", "a.b.c", true, false);
+            ("tls;sni=a.b.c;insecure;", "a.b.c", true, false);
+            ("tls;sni=a.b.c;insecure;0rtt", "a.b.c", true, true);
+            ("tls;sni=a.b.c;insecure;0rtt;", "a.b.c", true, true);
         ];
     }
 
@@ -166,26 +179,28 @@ mod test {
 
         n![
             "",
-            "key",
-            "key=",
-            "key=;",
-            "key=/a;",
-            "key=/a;cert",
-            "key=/a;cert=",
-            "key=/a;cert=;",
+            "tls",
+            "tls;",
+            "tls;key",
+            "tls;key=",
+            "tls;key=;",
+            "tls;key=/a;",
+            "tls;key=/a;cert",
+            "tls;key=/a;cert=",
+            "tls;key=/a;cert=;",
         ];
 
         y![
-            ("key=/a;cert=/b", "/a", "/b", "");
-            ("key=/a;cert=/b;", "/a", "/b", "");
-            ("key=/a;cert=/b;servername=;", "/a", "/b", "");
+            ("tls;key=/a;cert=/b", "/a", "/b", "");
+            ("tls;key=/a;cert=/b;", "/a", "/b", "");
+            ("tls;key=/a;cert=/b;servername=;", "/a", "/b", "");
 
-            ("servername=a.b.c", "", "", "a.b.c");
-            ("servername=a.b.c;", "", "", "a.b.c");
-            ("key=;cert=;servername=a.b.c", "", "", "a.b.c");
+            ("tls;servername=a.b.c", "", "", "a.b.c");
+            ("tls;servername=a.b.c;", "", "", "a.b.c");
+            ("tls;key=;cert=;servername=a.b.c", "", "", "a.b.c");
 
             // this is expected
-            ("key=/a;cert=/b;servername=a.b.c;", "/a", "/b", "a.b.c");
+            ("tls;key=/a;cert=/b;servername=a.b.c;", "/a", "/b", "a.b.c");
         ];
     }
 }
