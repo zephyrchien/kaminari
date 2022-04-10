@@ -15,22 +15,29 @@ pub fn parse_env() -> Result<(Endpoint, String)> {
     let plugin_opts = env::var("SS_PLUGIN_OPTIONS")?;
 
     let local = format!("{}:{}", local_host, local_port)
-        .to_socket_addrs()?.next().unwrap();
+        .to_socket_addrs()?
+        .next()
+        .unwrap();
 
     let remote = format!("{}:{}", remote_host, remote_port)
-        .to_socket_addrs()?.next().unwrap();
-    
-    Ok((Endpoint{local, remote}, plugin_opts))
+        .to_socket_addrs()?
+        .next()
+        .unwrap();
+
+    Ok((Endpoint { local, remote }, plugin_opts))
 }
 
 pub fn parse_cmd() -> Result<(Endpoint, String)> {
     let args: Vec<String> = env::args().collect();
 
-    anyhow::ensure!(args.len() == 4, "only allow 3 params: <local> <remote> <options>");
+    anyhow::ensure!(
+        args.len() == 4,
+        "only allow 3 params: <local> <remote> <options>"
+    );
 
     let local = args[1].to_socket_addrs()?.next().unwrap();
     let remote = args[2].to_socket_addrs()?.next().unwrap();
     let plugin_opts = args[3].clone();
 
-    Ok((Endpoint{local, remote}, plugin_opts))
+    Ok((Endpoint { local, remote }, plugin_opts))
 }

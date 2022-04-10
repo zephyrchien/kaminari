@@ -142,6 +142,8 @@ dependencies = [
 [[package]]
 name = "kaminari"
 version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac4230248f949ab9b97da55ad9f304c8c4d22ca347a0cdfbdf4930da32197f0a"
 dependencies = [
  "lightws",
  "rcgen",
@@ -153,10 +155,9 @@ dependencies = [
 
 [[package]]
 name = "kaminari"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac4230248f949ab9b97da55ad9f304c8c4d22ca347a0cdfbdf4930da32197f0a"
+version = "0.4.0"
 dependencies = [
+ "lazy_static",
  "lightws",
  "rcgen",
  "rustls-pemfile",
@@ -170,7 +171,7 @@ name = "kaminari-cmd"
 version = "0.1.1"
 dependencies = [
  "anyhow",
- "kaminari 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kaminari 0.3.1",
  "tokio",
 ]
 
