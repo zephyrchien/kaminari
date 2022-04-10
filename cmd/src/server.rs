@@ -7,6 +7,7 @@ use kaminari::AsyncAccept;
 use kaminari::nop::NopAccept;
 use kaminari::ws::WsAccept;
 use kaminari::tls::TlsAccept;
+use kaminari::trick::Ref;
 
 use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
@@ -22,22 +23,32 @@ async fn main() -> Result<()> {
 
     let lis = TcpListener::bind(local).await?;
 
-    while let Ok((stream, _)) = lis.accept().await {
-        match (ws.clone(), tls.clone()) {
-            (None, None) => tokio::spawn(relay(stream, remote, NopAccept {})),
-            (Some(ws), None) => {
-                tokio::spawn(relay(stream, remote, WsAccept::new(NopAccept {}, ws)))
+    macro_rules! run {
+        ($ac: expr) => {
+            while let Ok((stream, _)) = lis.accept().await {
+                tokio::spawn(relay(stream, remote, $ac));
             }
-            (None, Some(tls)) => {
-                tokio::spawn(relay(stream, remote, TlsAccept::new(NopAccept {}, tls)))
-            }
-            (Some(ws), Some(tls)) => tokio::spawn(relay(
-                stream,
-                remote,
-                WsAccept::new(TlsAccept::new(NopAccept {}, tls), ws),
-            )),
         };
     }
+
+    match (ws, tls) {
+        (None, None) => {
+            let server = NopAccept {};
+            run!(Ref::new(&server));
+        }
+        (Some(ws), None) => {
+            let server = WsAccept::new(NopAccept {}, ws);
+            run!(Ref::new(&server));
+        }
+        (None, Some(tls)) => {
+            let server = TlsAccept::new(NopAccept {}, tls);
+            run!(Ref::new(&server));
+        }
+        (Some(ws), Some(tls)) => {
+            let server = WsAccept::new(TlsAccept::new(NopAccept {}, tls), ws);
+            run!(Ref::new(&server));
+        }
+    };
 
     Ok(())
 }
@@ -45,7 +56,7 @@ async fn main() -> Result<()> {
 async fn relay<T: AsyncAccept<TcpStream>>(
     local: TcpStream,
     remote: SocketAddr,
-    server: T,
+    server: Ref<T>,
 ) -> Result<()> {
     let mut local = server.accept(local).await?;
 
