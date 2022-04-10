@@ -57,6 +57,30 @@ impl<T> TlsConnect<T> {
             cc: Arc::new(conf).into(),
         }
     }
+
+    // use shared roots
+    pub fn new_shared(conn: T, conf: TlsClientConf) -> Self {
+        let TlsClientConf {
+            sni,
+            insecure,
+            early_data,
+        } = conf;
+
+        let sni: ServerName = sni.as_str().try_into().expect("invalid DNS name");
+
+        let mut conf = ClientConfig::builder()
+            .with_safe_defaults()
+            .with_custom_certificate_verifier(utils::new_verifier(insecure))
+            .with_no_client_auth();
+
+        conf.enable_early_data = early_data;
+
+        Self {
+            conn,
+            sni,
+            cc: Arc::new(conf).into(),
+        }
+    }
 }
 
 impl<S, T> AsyncConnect<S> for TlsConnect<T>
@@ -93,23 +117,55 @@ pub struct TlsAccept<T> {
 
 impl<T> TlsAccept<T> {
     pub fn new(lis: T, conf: TlsServerConf) -> Self {
-        let cert;
-        let key;
+        let TlsServerConf {
+            crt,
+            key,
+            server_name,
+        } = conf;
 
-        if !conf.crt.is_empty() && !conf.key.is_empty() {
-            cert = utils::read_certificates(&conf.crt).expect("failed to read certificate");
-            key = utils::read_private_key(&conf.key).expect("failed to read private key");
-        } else if !conf.server_name.is_empty() {
-            (cert, key) = utils::generate_self_signed(&conf.server_name);
+        let (cert, key) = if !crt.is_empty() && !key.is_empty() {
+            (
+                utils::read_certificates(&crt).expect("failed to read certificate"),
+                utils::read_private_key(&key).expect("failed to read private key"),
+            )
+        } else if !server_name.is_empty() {
+            utils::generate_self_signed(&server_name)
         } else {
             panic!("no certificate or private key supplied")
-        }
+        };
 
         let conf = ServerConfig::builder()
             .with_safe_defaults()
             .with_no_client_auth()
             .with_single_cert(cert, key)
             .expect("bad certificate or key");
+
+        Self {
+            lis,
+            ac: Arc::new(conf).into(),
+        }
+    }
+
+    // use shared cert, key
+    pub fn new_shared(lis: T, conf: TlsServerConf) -> Self {
+        let TlsServerConf {
+            crt,
+            key,
+            server_name,
+        } = conf;
+
+        let cert_resolver = if crt.is_empty() && key.is_empty() {
+            utils::new_crt_key_resolver(crt, key, None, None)
+        } else if !server_name.is_empty() {
+            utils::new_self_signed_resolver(server_name)
+        } else {
+            panic!("no certificate or private key supplied")
+        };
+
+        let conf = ServerConfig::builder()
+            .with_safe_defaults()
+            .with_no_client_auth()
+            .with_cert_resolver(cert_resolver);
 
         Self {
             lis,
@@ -137,95 +193,217 @@ where
 
 #[allow(unused)]
 mod utils {
-    use std::io::{BufReader, Result};
-    use std::fs::{self, File};
+    pub use client::*;
+    pub use server::*;
 
-    use tokio_rustls::rustls;
-    use rustls::{Certificate, PrivateKey};
-    use rustls::RootCertStore;
-    use rustls::OwnedTrustAnchor;
+    mod client {
+        use std::sync::Arc;
+        use tokio_rustls::rustls;
+        use rustls::{Certificate, PrivateKey};
+        use rustls::{RootCertStore, OwnedTrustAnchor};
+        use rustls::client::{ServerCertVerified, ServerCertVerifier, WebPkiVerifier};
+        use webpki_roots::TLS_SERVER_ROOTS;
+        use lazy_static::lazy_static;
 
-    use rustls_pemfile::Item;
-    use webpki_roots::TLS_SERVER_ROOTS;
+        pub fn firefox_roots() -> RootCertStore {
+            let mut roots = RootCertStore::empty();
+            roots.add_server_trust_anchors(TLS_SERVER_ROOTS.0.iter().map(|x| {
+                OwnedTrustAnchor::from_subject_spki_name_constraints(
+                    x.subject,
+                    x.spki,
+                    x.name_constraints,
+                )
+            }));
+            roots
+        }
 
-    // copy & paste from https://github.com/EAimTY/tuic/blob/master/server/src/certificate.rs
+        pub struct SkipVerify {}
 
-    pub fn read_certificates(path: &str) -> Result<Vec<Certificate>> {
-        let mut file = BufReader::new(File::open(path)?);
-        let mut certs = Vec::new();
-
-        // pem
-        while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
-            if let Item::X509Certificate(cert) = item {
-                certs.push(Certificate(cert));
+        impl ServerCertVerifier for SkipVerify {
+            fn verify_server_cert(
+                &self,
+                _end_entity: &rustls::Certificate,
+                _intermediates: &[rustls::Certificate],
+                _server_name: &rustls::ServerName,
+                _scts: &mut dyn Iterator<Item = &[u8]>,
+                _ocsp_response: &[u8],
+                _now: std::time::SystemTime,
+            ) -> std::result::Result<rustls::client::ServerCertVerified, rustls::Error>
+            {
+                Ok(ServerCertVerified::assertion())
             }
         }
 
-        // der
-        if certs.is_empty() {
-            certs = vec![Certificate(fs::read(path)?)];
+        fn new_insecure_verifier() -> Arc<SkipVerify> {
+            lazy_static! {
+                static ref ARC: Arc<SkipVerify> = Arc::new(SkipVerify {});
+            }
+            ARC.clone()
         }
 
-        Ok(certs)
+        fn new_firefox_verifier() -> Arc<WebPkiVerifier> {
+            lazy_static! {
+                static ref ARC: Arc<WebPkiVerifier> =
+                    Arc::new(WebPkiVerifier::new(firefox_roots(), None));
+            }
+            ARC.clone()
+        }
+
+        pub fn new_verifier(insecure: bool) -> Arc<dyn ServerCertVerifier> {
+            if insecure {
+                new_insecure_verifier()
+            } else {
+                new_firefox_verifier()
+            }
+        }
     }
 
-    pub fn read_private_key(path: &str) -> Result<PrivateKey> {
-        let mut file = BufReader::new(File::open(path)?);
-        let mut priv_key = None;
+    mod server {
+        use std::io::{BufReader, Result};
+        use std::fs::{self, File};
+        use std::sync::{Arc, Mutex};
 
-        // pem
-        while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
-            if let Item::RSAKey(key) | Item::PKCS8Key(key) | Item::ECKey(key) = item {
-                priv_key = Some(key);
+        use tokio_rustls::rustls;
+        use rustls::{Certificate, PrivateKey};
+        use rustls::sign;
+        use rustls::server::ResolvesServerCert;
+        use rustls::server::ClientHello;
+
+        use rustls_pemfile::Item;
+        use webpki_roots::TLS_SERVER_ROOTS;
+
+        use lazy_static::lazy_static;
+
+        // copy & paste from https://github.com/EAimTY/tuic/blob/master/server/src/certificate.rs
+        pub fn read_certificates(path: &str) -> Result<Vec<Certificate>> {
+            let mut file = BufReader::new(File::open(path)?);
+            let mut certs = Vec::new();
+
+            // pem
+            while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
+                if let Item::X509Certificate(cert) = item {
+                    certs.push(Certificate(cert));
+                }
+            }
+
+            // der
+            if certs.is_empty() {
+                certs = vec![Certificate(fs::read(path)?)];
+            }
+
+            Ok(certs)
+        }
+
+        pub fn read_private_key(path: &str) -> Result<PrivateKey> {
+            let mut file = BufReader::new(File::open(path)?);
+            let mut priv_key = None;
+
+            // pem
+            while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
+                if let Item::RSAKey(key) | Item::PKCS8Key(key) | Item::ECKey(key) = item {
+                    priv_key = Some(key);
+                }
+            }
+
+            // der
+            priv_key
+                .map(Ok)
+                .unwrap_or_else(|| fs::read(path))
+                .map(PrivateKey)
+        }
+
+        pub fn generate_self_signed(server_name: &str) -> (Vec<Certificate>, PrivateKey) {
+            let self_signed = rcgen::generate_simple_self_signed(vec![server_name.to_string()])
+                .expect("failed to generate self signed certificate and private key");
+
+            let key = PrivateKey(self_signed.serialize_private_key_der());
+
+            let cert = self_signed
+                .serialize_der()
+                .map(Certificate)
+                .expect("failed to serialize self signed certificate");
+
+            (vec![cert], key)
+        }
+
+        // copy from rustls:
+        // https://docs.rs/rustls/latest/src/rustls/server/handy.rs.html
+        pub struct AlwaysResolvesChain(Arc<sign::CertifiedKey>);
+
+        impl ResolvesServerCert for AlwaysResolvesChain {
+            fn resolve(&self, _: ClientHello) -> Option<Arc<sign::CertifiedKey>> {
+                Some(Arc::clone(&self.0))
             }
         }
 
-        // der
-        priv_key
-            .map(Ok)
-            .unwrap_or_else(|| fs::read(path))
-            .map(PrivateKey)
-    }
+        pub fn new_resolver(
+            chain: Vec<Certificate>,
+            priv_key: &PrivateKey,
+            ocsp: Option<Vec<u8>>,
+            scts: Option<Vec<u8>>,
+        ) -> Arc<AlwaysResolvesChain> {
+            let key = sign::any_supported_type(priv_key).expect("invalid key");
+            Arc::new(AlwaysResolvesChain(Arc::new(sign::CertifiedKey {
+                cert: chain,
+                key,
+                ocsp,
+                sct_list: scts,
+            })))
+        }
 
-    pub fn firefox_roots() -> RootCertStore {
-        let mut roots = RootCertStore::empty();
-        roots.add_server_trust_anchors(TLS_SERVER_ROOTS.0.iter().map(|x| {
-            OwnedTrustAnchor::from_subject_spki_name_constraints(
-                x.subject,
-                x.spki,
-                x.name_constraints,
-            )
-        }));
-        roots
-    }
+        pub fn new_self_signed_resolver(server_name: String) -> Arc<AlwaysResolvesChain> {
+            type Store = Mutex<Vec<(String, Arc<AlwaysResolvesChain>)>>;
+            lazy_static! {
+                static ref STORE: Store = { Mutex::new(Vec::new()) };
+            }
 
-    pub fn generate_self_signed(server_name: &str) -> (Vec<Certificate>, PrivateKey) {
-        let self_signed = rcgen::generate_simple_self_signed(vec![server_name.to_string()])
-            .expect("failed to generate self signed certificate and private key");
+            // hold the lock
+            let mut store = STORE.lock().unwrap();
 
-        let key = PrivateKey(self_signed.serialize_private_key_der());
+            // simply increase ref count
+            if let Some(x) = store.iter().find(|(x, _)| *x == server_name) {
+                return x.1.clone();
+            }
 
-        let cert = self_signed
-            .serialize_der()
-            .map(Certificate)
-            .expect("failed to serialize self signed certificate");
+            // generate a new cert
+            let (cert, key) = generate_self_signed(&server_name);
+            let resolver = new_resolver(cert, &key, None, None);
 
-        (vec![cert], key)
-    }
+            store.push((server_name, resolver.clone()));
+            store.shrink_to_fit();
 
-    use rustls::client::{ServerCertVerified, ServerCertVerifier};
-    pub struct SkipVerify {}
-    impl ServerCertVerifier for SkipVerify {
-        fn verify_server_cert(
-            &self,
-            _end_entity: &rustls::Certificate,
-            _intermediates: &[rustls::Certificate],
-            _server_name: &rustls::ServerName,
-            _scts: &mut dyn Iterator<Item = &[u8]>,
-            _ocsp_response: &[u8],
-            _now: std::time::SystemTime,
-        ) -> std::result::Result<rustls::client::ServerCertVerified, rustls::Error> {
-            Ok(ServerCertVerified::assertion())
+            resolver
+        }
+
+        pub fn new_crt_key_resolver(
+            crt: String,
+            key: String,
+            ocsp: Option<Vec<u8>>,
+            scts: Option<Vec<u8>>,
+        ) -> Arc<AlwaysResolvesChain> {
+            type Store = Mutex<Vec<(String, Arc<AlwaysResolvesChain>)>>;
+            lazy_static! {
+                static ref STORE: Store = { Mutex::new(Vec::new()) };
+            }
+
+            // hold the lock
+            let mut store = STORE.lock().unwrap();
+
+            // find based on key path, no real data
+            // simply increase ref count
+            if let Some(x) = store.iter().find(|(x, _)| *x == key) {
+                return x.1.clone();
+            }
+
+            // read cert and key
+            let cert = read_certificates(&crt).expect("failed to read certificate");
+            let priv_key = read_private_key(&key).expect("failed to read private key");
+            let resolver = new_resolver(cert, &priv_key, ocsp, scts);
+
+            store.push((key, resolver.clone()));
+            store.shrink_to_fit();
+
+            resolver
         }
     }
 }

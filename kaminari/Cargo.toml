@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -15,3 +15,4 @@ tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_config
 webpki-roots = "0.22.3"
 rustls-pemfile = "0.3"
 rcgen = "0.9"
+lazy_static = "1.4.0"
