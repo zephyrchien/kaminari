@@ -30,3 +30,4 @@ pub mod nop;
 pub mod tls;
 pub mod mix;
 pub mod opt;
+pub mod trick;
