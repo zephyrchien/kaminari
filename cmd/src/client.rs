@@ -18,6 +18,8 @@ async fn main() -> Result<()> {
     let ws = opt::get_ws_conf(&options);
     let tls = opt::get_tls_client_conf(&options);
 
+    eprintln!("listen: {}", &local);
+    eprintln!("remote: {}", &remote);
     eprintln!("ws: {:?}", &ws);
     eprintln!("tls: {:?}", &tls);
 
