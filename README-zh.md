@@ -1,4 +1,4 @@
-# Kaminari
+# 电光石火
 
 [![workflow](https://github.com/zephyrchien/kaminari/workflows/release/badge.svg)](https://github.com/zephyrchien/kaminari/actions)
 [![crates.io](https://img.shields.io/crates/v/kaminari.svg)](https://crates.io/crates/kaminari)
@@ -7,15 +7,15 @@
 
 [English](README.md) | [简体中文](README-zh.md)
 
-The ever fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
+基于 [lightws](https://github.com/zephyrchien/lightws) 构建的 websocket 隧道工具.
 
-## Intro
+## 简介
 
-- Client side receives tcp then sends [tcp/ws/tls/wss].
+- 客户端接收tcp, 发送 [tcp/ws/tls/wss].
 
-- Server side receives [tcp/ws/tls/wss] then sends tcp.
+- 服务端接收 [tcp/ws/tls/wss], 发送 tcp.
 
-- Compatible with shadowsocks [SIP003 plugin](https://shadowsocks.org/en/wiki/Plugin.html).
+- 兼容 shadowsocks [SIP003 plugin](https://shadowsocks.org/en/wiki/Plugin.html).
 
 ```text
  tcp                           ws/tls/wss                           tcp
@@ -29,9 +29,9 @@ The ever fast websocket tunnel built on top of [lightws](https://github.com/zeph
         +-------------------+              +-------------------+       
 ```
 
-## Usage
+## 使用方法
 
-Standalone:
+单独运行:
 
 ```shell
 kaminaric <local_addr> <remote_addr> <options>
@@ -39,7 +39,7 @@ kaminaric <local_addr> <remote_addr> <options>
 kaminaris <local_addr> <remote_addr> <options>
 ```
 
-As shadowsocks plugin:
+作为 shadowsocks 插件运行:
 
 ```shell
 sslocal ... --plugin <path/to/kaminaric> --plugin-opts <options>
@@ -47,45 +47,48 @@ sslocal ... --plugin <path/to/kaminaric> --plugin-opts <options>
 ssserver ... --plugin <path/to/kaminaris> --plugin-opts <options>
 ```
 
-## Options
+## 选项及定义
 
-All options are presented in a single formatted string. An example is "ws;path=/ws;host=example.com", where semicolons, equal signs and backslashes MUST be escaped with a backslash.
+所有的选项都包含在一个字符串内, 格式均为`key` 或 `key=value`, 各选项间用`;`分割.
 
-Below is a list of availabe options, `*` means **must**.
+示例:
+"ws;path=/ws;host=example.com".
 
-### Websocket Options
+以下是完整的选项列表, 带 `*` 的为必要选项.
 
-use `ws` to enable websocket.
+### Websocket 选项
 
-Client or server side options:
+添加 `ws` 以启用 websocket.
 
-- `host=<host>`* : set http host.
+客户端、服务端通用选项:
 
-- `path=<path>`* : set http path.
+- `host=<host>`* : 设置 http host.
 
-### TLS Options
+- `path=<path>`* : 设置 http path.
 
-use `tls` to enable tls.
+### TLS 选项
 
-Client side options:
+添加 `tls` 以启用 tls.
 
-- `sni=<sni>`* : set sni.
+客户端选项:
 
-- `0rtt`: enable early data.
+- `sni=<sni>`* : 设置发送的 sni.
 
-- `insecure`: skip server cert verification.
+- `0rtt`: 启用 early data.
 
-Server side options:
+- `insecure`: 跳过证书验证.
 
-Requires either `cert+key` or `servername`.
+服务端选项:
 
-- `key=<path/to/key>`* : private key path.
+必须提供证书和私匙路径, 或者域名(用于自签证书).
 
-- `cert=<path/to/cert>`* : certificate path.
+- `key=<path/to/key>`* : 私钥路径.
 
-- `servername=<name>`* : generate self signed cert/key, use $name as CN.
+- `cert=<path/to/cert>`* : 证书路径.
 
-### Examples
+- `servername=<name>`* : 自签证书, 以 $name 为域名.
+
+### 示例
 
 tcp ⇋ ws --- ws ⇋ tcp:
 
@@ -100,10 +103,10 @@ tcp ⇋ tls --- tls ⇋ tcp:
 ```shell
 kaminaric 127.0.0.1:10000 127.0.0.1:20000 'tls;sni=example.com'
 
-# use cert + key
+# 使用证书和私钥
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'tls;cert=example.com.crt;key=example.com.key'
 
-# or generate self signed cert/key
+# 或者使用自签证书
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'tls;servername=example.com'
 ```
 
@@ -112,9 +115,9 @@ tcp ⇋ wss --- wss ⇋ tcp:
 ```shell
 kaminaric 127.0.0.1:10000 127.0.0.1:20000 'ws;host=example.com;path=/ws;tls;sni=example.com'
 
-# use cert + key
+# 使用证书和私钥
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;cert=example.com.crt;key=example.com.key'
 
-# or generate self signed cert/key
+# 或者使用自签证书
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;servername=example.com'
 ```
