@@ -118,3 +118,25 @@ kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;cert
 # or generate self signed cert/key
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;servername=example.com'
 ```
+
+shadowsocks plugin:
+
+```shell
+ssserver -s "0.0.0.0:8080" -m "aes-128-gcm" -k "123456" \
+    --plugin "path/to/kaminaris" \
+    --plugin-opts "ws;host=example.com;path=/chat"
+```
+
+```shell
+sslocal -b "127.0.0.1:1080" -s "example.com:8080" -m "aes-128-gcm" -k "123456" \
+    --plugin "path/to/kaminaric" \
+    --plugin-opts "ws;host=example.com;path=/chat"
+```
+
+*To use `v2ray-plugin` on client side, add `mux=0` to disable multiplex, so that it sends standard websocket stream which can be handled by `kaminari` or any other middlewares.
+
+```shell
+sslocal -b "127.0.0.1:1080" -s "example.com:8080" -m "aes-128-gcm" -k "123456" \
+    --plugin "path/to/v2ray-plugin" \
+    --plugin-opts "mux=0;host=example.com;path=/chat"
+```
