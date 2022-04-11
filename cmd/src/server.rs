@@ -14,7 +14,15 @@ use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 #[tokio::main]
 async fn main() -> Result<()> {
     let (Endpoint { local, remote }, options) = parse_env()
-        .map(|(Endpoint { local, remote }, opt)| (Endpoint { remote, local }, opt))
+        .map(|(Endpoint { local, remote }, opt)| {
+            (
+                Endpoint {
+                    local: remote,
+                    remote: local,
+                },
+                opt,
+            )
+        })
         .or_else(|_| parse_cmd())?;
 
     let ws = opt::get_ws_conf(&options);
