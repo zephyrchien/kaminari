@@ -1,6 +1,6 @@
 [package]
 name = "kaminari-cmd"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 repository = "https://github.com/zephyrchien/kaminari/cmd"
