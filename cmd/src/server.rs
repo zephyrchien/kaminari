@@ -37,8 +37,13 @@ async fn main() -> Result<()> {
 
     macro_rules! run {
         ($ac: expr) => {
-            while let Ok((stream, _)) = lis.accept().await {
-                tokio::spawn(relay(stream, remote, $ac));
+            loop {
+                match lis.accept().await {
+                    Ok((stream, _)) => {
+                        tokio::spawn(relay(stream, remote, $ac));
+                    }
+                    Err(e) => eprintln!("accept error: {}", e),
+                }
             }
         };
     }
@@ -61,8 +66,6 @@ async fn main() -> Result<()> {
             run!(Ref::new(&server));
         }
     };
-
-    Ok(())
 }
 
 async fn relay<T: AsyncAccept<TcpStream>>(
