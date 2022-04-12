@@ -1,10 +1,12 @@
 [package]
 name = "kaminari-cmd"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 repository = "https://github.com/zephyrchien/kaminari/cmd"
-license = "GPLv3"
+description = "The ever fast websocket tunnel built on top of lightws."
+readme = "README.md"
+license = "GPL-3.0"
 
 [dependencies]
 kaminari = "0.4.1"
