@@ -1,10 +1,11 @@
 [package]
 name = "kaminari"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
 repository = "https://github.com/zephyrchien/kaminari"
+documentation = "https://docs.rs/kaminari"
 description = "The ever fast websocket tunnel built on top of lightws."
 license = "MIT"
 

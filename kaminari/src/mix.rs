@@ -103,6 +103,8 @@ impl<S: IOStream> AsyncAccept<S> for MixAccept {
 }
 
 // ========== stream ==========
+pub use stream::{MixClientStream, MixServerStream};
+
 mod stream {
     use std::io::Result;
     use std::pin::Pin;
