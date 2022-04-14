@@ -94,7 +94,7 @@ where
 
     fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
         async move {
-            let mut buf = [0u8; 256];
+            let mut buf = [0u8; 1024];
             let stream = self.conn.connect(stream).await?;
             let stream = Endpoint::<_, M::ClientType>::connect_async(
                 stream,
@@ -132,7 +132,7 @@ where
 
     fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
         async move {
-            let mut buf = [0u8; 512];
+            let mut buf = [0u8; 1024];
             let stream = self.lis.accept(stream).await?;
 
             let stream = Endpoint::<_, Server>::accept_async(
