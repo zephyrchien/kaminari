@@ -1,14 +1,18 @@
 use std::io::Result;
 use std::future::Future;
+use std::marker::PhantomData;
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
 use lightws::endpoint::Endpoint;
-use lightws::role::{Client, Server};
+use lightws::role::{Server, Client, StandardClient, FixedMaskClient, ClientRole};
 use lightws::stream::{Guarded, Stream};
 
-pub type WsClientStream<T> = Stream<T, Client, Guarded>;
-pub type WsServerStream<T> = Stream<T, Server, Guarded>;
+pub(crate) type WsStream<T, R> = Stream<T, R, Guarded>;
+pub type WsServerStream<T> = WsStream<T, Server>;
+pub type WsClientStream<T> = WsStream<T, Client>;
+pub type WsStandardClientStream<T> = WsStream<T, StandardClient>;
+pub type WsFixedClientStream<T> = WsStream<T, FixedMaskClient>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WsConf {
@@ -17,22 +21,63 @@ pub struct WsConf {
 }
 
 // =========== client ==========
+#[derive(Clone, Copy)]
+pub struct Simple {}
+
+#[derive(Clone, Copy)]
+pub struct Standard {}
+
+#[derive(Clone, Copy)]
+pub struct Fixed {}
+
+pub trait Mode {
+    type ClientType: ClientRole;
+}
+
+impl Mode for Simple {
+    type ClientType = Client;
+}
+
+impl Mode for Standard {
+    type ClientType = StandardClient;
+}
+
+impl Mode for Fixed {
+    type ClientType = FixedMaskClient;
+}
+
 #[derive(Clone)]
-pub struct WsConnect<T> {
+pub struct WsConnect<T, M = Simple> {
     conn: T,
     conf: WsConf,
+    _marker: PhantomData<M>,
 }
 
 impl<T> WsConnect<T> {
-    pub const fn new(conn: T, conf: WsConf) -> Self { Self { conn, conf } }
+    pub const fn new(conn: T, conf: WsConf) -> Self {
+        Self {
+            conn,
+            conf,
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn standard(self) -> WsConnect<T, Standard> {
+        WsConnect {
+            conn: self.conn,
+            conf: self.conf,
+            _marker: PhantomData,
+        }
+    }
 }
 
-impl<S, T> AsyncConnect<S> for WsConnect<T>
+impl<S, T, M: Mode> AsyncConnect<S> for WsConnect<T, M>
 where
     S: IOStream,
     T: AsyncConnect<S>,
+    M::ClientType: Unpin + 'static,
 {
-    type Stream = WsClientStream<T::Stream>;
+    type Stream = Stream<T::Stream, M::ClientType, Guarded>;
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
@@ -40,7 +85,7 @@ where
         async move {
             let mut buf = [0u8; 256];
             let stream = self.conn.connect(stream).await?;
-            let stream = Endpoint::<_, Client>::connect_async(
+            let stream = Endpoint::<_, M::ClientType>::connect_async(
                 stream,
                 &mut buf,
                 &self.conf.host,
