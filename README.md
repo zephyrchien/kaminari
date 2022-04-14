@@ -63,6 +63,18 @@ Client or server side options:
 
 - `path=<path>`* : set http path.
 
+Client side extra options:
+
+- `mask=<mode>` : set mask mode. Available values: [skipped, standard, fixed]
+
+#### About mask mode
+
+A websocket client should mask the payload before sending it.
+
+With `mode=<skip>`(default mode), we use an empty mask key(0x00..0) to simply skip masking, which can also be detected by our server, and then skip unmasking. Other softwares(Nginx, Haproxy, CDNs..) can still correctly handle our data without knowing this trick.
+
+As for `mode=<fixed>` or `mode=<standard>`, client will mask the payload data as normal. In `fixed` mode, client will use the same mask key for a unique websocket connection. While In `standard` mode, client will update the mask key between sending each frames.
+
 ### TLS Options
 
 use `tls` to enable tls.
