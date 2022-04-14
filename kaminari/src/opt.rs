@@ -9,6 +9,9 @@ macro_rules! has_opt {
     ($it: expr, $name: expr) => {
         $it.find(|&kv| kv == $name).is_some()
     };
+    ($s: expr => $name: expr) => {
+        $crate::has_opt!($s.split(';').map(|x| x.trim()), $name)
+    };
 }
 
 #[macro_export]
@@ -18,6 +21,9 @@ macro_rules! get_opt {
             .and_then(|kv| kv.split_once("="))
             .map(|(_, v)| v.trim())
             .and_then(|v| if v.is_empty() { None } else { Some(v) })
+    };
+    ($s: expr => $name: expr) => {
+        $crate::get_opt!($s.split(';').map(|x| x.trim()), $name)
     };
 }
 
