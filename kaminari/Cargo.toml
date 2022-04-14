@@ -14,6 +14,6 @@ lightws = "0.6"
 tokio = "1"
 tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_configuration"] }
 webpki-roots = "0.22.3"
-rustls-pemfile = "0.3"
+rustls-pemfile = "1"
 rcgen = "0.9"
 lazy_static = "1.4.0"
