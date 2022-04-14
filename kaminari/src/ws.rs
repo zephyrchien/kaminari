@@ -69,6 +69,14 @@ impl<T> WsConnect<T> {
             _marker: PhantomData,
         }
     }
+
+    pub fn fixed(self) -> WsConnect<T, Fixed> {
+        WsConnect {
+            conn: self.conn,
+            conf: self.conf,
+            _marker: PhantomData,
+        }
+    }
 }
 
 impl<S, T, M: Mode> AsyncConnect<S> for WsConnect<T, M>
