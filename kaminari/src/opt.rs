@@ -1,3 +1,5 @@
+#![allow(clippy::nonminimal_bool)]
+
 use super::ws::WsConf;
 use super::tls::{TlsClientConf, TlsServerConf};
 
