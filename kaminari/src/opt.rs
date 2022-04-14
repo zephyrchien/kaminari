@@ -1,15 +1,18 @@
 #![allow(clippy::nonminimal_bool)]
+#![macro_use]
 
 use super::ws::WsConf;
 use super::tls::{TlsClientConf, TlsServerConf};
 
-macro_rules! has {
+#[macro_export]
+macro_rules! has_opt {
     ($it: expr, $name: expr) => {
         $it.find(|&kv| kv == $name).is_some()
     };
 }
 
-macro_rules! get {
+#[macro_export]
+macro_rules! get_opt {
     ($it: expr, $name: expr) => {
         $it.find(|kv| kv.starts_with($name))
             .and_then(|kv| kv.split_once("="))
@@ -18,15 +21,18 @@ macro_rules! get {
     };
 }
 
+pub use has_opt;
+pub use get_opt;
+
 pub fn get_ws_conf(s: &str) -> Option<WsConf> {
     let it = s.split(';').map(|x| x.trim());
 
-    if !has!(it.clone(), "ws") {
+    if !has_opt!(it.clone(), "ws") {
         return None;
     }
 
-    let host = get!(it.clone(), "host");
-    let path = get!(it.clone(), "path");
+    let host = get_opt!(it.clone(), "host");
+    let path = get_opt!(it.clone(), "path");
 
     if let (Some(host), Some(path)) = (host, path) {
         Some(WsConf {
@@ -41,13 +47,13 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
 pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     let it = s.split(';').map(|x| x.trim());
 
-    if !has!(it.clone(), "tls") {
+    if !has_opt!(it.clone(), "tls") {
         return None;
     }
 
-    let sni = get!(it.clone(), "sni");
-    let insecure = has!(it.clone(), "insecure");
-    let early_data = has!(it.clone(), "0rtt");
+    let sni = get_opt!(it.clone(), "sni");
+    let insecure = has_opt!(it.clone(), "insecure");
+    let early_data = has_opt!(it.clone(), "0rtt");
 
     sni.map(|sni| TlsClientConf {
         sni: String::from(sni),
@@ -59,13 +65,13 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
 pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
     let it = s.split(';').map(|x| x.trim());
 
-    if !has!(it.clone(), "tls") {
+    if !has_opt!(it.clone(), "tls") {
         return None;
     }
 
-    let crt = get!(it.clone(), "cert");
-    let key = get!(it.clone(), "key");
-    let server_name = get!(it.clone(), "servername");
+    let crt = get_opt!(it.clone(), "cert");
+    let key = get_opt!(it.clone(), "key");
+    let server_name = get_opt!(it.clone(), "servername");
 
     if crt.is_some() && key.is_some() || server_name.is_some() {
         Some(TlsServerConf {
