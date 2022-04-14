@@ -54,6 +54,7 @@ pub struct WsConnect<T, M = Simple> {
 }
 
 impl<T> WsConnect<T> {
+    #[inline]
     pub const fn new(conn: T, conf: WsConf) -> Self {
         Self {
             conn,
@@ -62,6 +63,7 @@ impl<T> WsConnect<T> {
         }
     }
 
+    #[inline]
     pub fn standard(self) -> WsConnect<T, Standard> {
         WsConnect {
             conn: self.conn,
@@ -70,6 +72,7 @@ impl<T> WsConnect<T> {
         }
     }
 
+    #[inline]
     pub fn fixed(self) -> WsConnect<T, Fixed> {
         WsConnect {
             conn: self.conn,
@@ -115,6 +118,7 @@ pub struct WsAccept<T> {
 }
 
 impl<T> WsAccept<T> {
+    #[inline]
     pub const fn new(lis: T, conf: WsConf) -> Self { Self { lis, conf } }
 }
 

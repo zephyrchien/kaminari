@@ -27,9 +27,11 @@ impl<T> AsRef<T> for Ref<T> {
 }
 
 impl<T> From<&T> for Ref<T> {
+    #[inline]
     fn from(x: &T) -> Self { Ref(x as *const _) }
 }
 
 impl<T> Ref<T> {
+    #[inline]
     pub const fn new(x: &T) -> Self { Self(x as *const _) }
 }
