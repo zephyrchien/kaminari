@@ -129,14 +129,12 @@ dependencies = [
 
 [[package]]
 name = "kaminari"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df2ca3de88447dc338247c2c71c9b710c83b056dbc11fcf87b3a3fa05db455e0"
+version = "0.5.3"
 dependencies = [
  "lazy_static",
- "lightws 0.4.5",
+ "lightws",
  "rcgen",
- "rustls-pemfile 0.3.0",
+ "rustls-pemfile",
  "tokio",
  "tokio-rustls",
  "webpki-roots",
@@ -144,12 +142,14 @@ dependencies = [
 
 [[package]]
 name = "kaminari"
-version = "0.5.0"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b26f0fb6b65f2c8304d17d6f2fd76d4b4a081d7683ea6664905299cc7bd1edf"
 dependencies = [
  "lazy_static",
- "lightws 0.6.1",
+ "lightws",
  "rcgen",
- "rustls-pemfile 1.0.0",
+ "rustls-pemfile",
  "tokio",
  "tokio-rustls",
  "webpki-roots",
@@ -157,10 +157,10 @@ dependencies = [
 
 [[package]]
 name = "kaminari-cmd"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "anyhow",
- "kaminari 0.4.1",
+ "kaminari 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
 ]
 
@@ -178,23 +178,9 @@ checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
 
 [[package]]
 name = "lightws"
-version = "0.4.5"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73223fefcf168b791b55b0d0a75605141993c3cdfed47cd65f3773ce6c4bb74f"
-dependencies = [
- "base64 0.20.0-alpha.1",
- "cfg-if",
- "httparse",
- "rand",
- "sha1",
- "tokio",
-]
-
-[[package]]
-name = "lightws"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1df0458f49d9e8e108609aa6fefe7ef47715551ba94f7455a1b7db656306d72c"
+checksum = "94010c166164a0e47aceb5bba8d2b62ed5a29578826c419c40c3f47191d9036a"
 dependencies = [
  "base64 0.20.0-alpha.1",
  "cfg-if",
@@ -382,15 +368,6 @@ dependencies = [
  "ring",
  "sct",
  "webpki",
-]
-
-[[package]]
-name = "rustls-pemfile"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ee86d63972a7c661d1536fefe8c3c8407321c3df668891286de28abcd087360"
-dependencies = [
- "base64 0.13.0",
 ]
 
 [[package]]

@@ -38,6 +38,28 @@ async fn main() -> Result<()> {
         };
     }
 
+    macro_rules! run_ws_each {
+        ($client: expr) => {
+            let ws_mask_mode = opt::get_opt!(&options => "mask");
+            match ws_mask_mode {
+                Some("standard") => {
+                    eprintln!("mask: standard");
+                    let client = $client.standard();
+                    run!(Ref::new(&client));
+                },
+                Some("fixed") => {
+                    let client = $client.fixed();
+                    eprintln!("mask: fixed");
+                    run!(Ref::new(&client));
+                },
+                _ => {
+                    eprintln!("mask: skip");
+                    run!(Ref::new(&$client));
+                }
+            };
+        }
+    }
+
     match (ws, tls) {
         (None, None) => {
             let client = NopConnect {};
@@ -45,7 +67,7 @@ async fn main() -> Result<()> {
         }
         (Some(ws), None) => {
             let client = WsConnect::new(NopConnect {}, ws);
-            run!(Ref::new(&client));
+            run_ws_each!(client);
         }
         (None, Some(tls)) => {
             let client = TlsConnect::new(NopConnect {}, tls);
@@ -53,7 +75,7 @@ async fn main() -> Result<()> {
         }
         (Some(ws), Some(tls)) => {
             let client = WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws);
-            run!(Ref::new(&client));
+            run_ws_each!(client);
         }
     };
 }
