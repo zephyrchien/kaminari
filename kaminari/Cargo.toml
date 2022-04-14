@@ -10,7 +10,7 @@ description = "The ever fast websocket tunnel built on top of lightws."
 license = "MIT"
 
 [dependencies]
-lightws = "0.4.5"
+lightws = "0.6"
 tokio = "1"
 tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_configuration"] }
 webpki-roots = "0.22.3"
