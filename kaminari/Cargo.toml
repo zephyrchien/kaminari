@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -10,7 +10,7 @@ description = "The ever fast websocket tunnel built on top of lightws."
 license = "MIT"
 
 [dependencies]
-lightws = "0.6"
+lightws = { version = "0.6.2", features = ["unsafe_auto_mask_write"] }
 tokio = "1"
 tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_configuration"] }
 webpki-roots = "0.22.3"

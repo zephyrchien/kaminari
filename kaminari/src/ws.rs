@@ -104,7 +104,6 @@ where
             )
             .await?
             .guard();
-
             Ok(stream)
         }
     }
