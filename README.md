@@ -67,7 +67,7 @@ Client side extra options:
 
 - `mask=<mode>` : set mask mode. Available values: [skipped, standard, fixed]
 
-#### About mask mode
+#### About Mask Mode
 
 A websocket client should mask the payload before sending it.
 
@@ -96,6 +96,22 @@ Requires either `cert+key` or `servername`.
 - `cert=<path/to/cert>`* : certificate path.
 
 - `servername=<name>`* : generate self signed cert/key, use $name as CN.
+
+- `ocsp=<path/to/ocsp>`: der-encoded OCSP response.
+
+#### OCSP Stapling
+
+See [Wikipedia](https://en.wikipedia.org/wiki/OCSP_stapling).
+
+Openssl example for [Let's Encrypt](https://letsencrypt.org/):
+
+```shell
+openssl ocsp -issuer <path/to/ca> \
+    -cert <path/to/cert> \
+    -url http://r3.o.lencr.org \
+    -header Host=r3.o.lencr.org \
+    -respout <path/to/ocsp> -noverify -no_nonce
+```
 
 ### Examples
 
