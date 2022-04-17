@@ -106,6 +106,7 @@ where
 pub struct TlsServerConf {
     pub crt: String,
     pub key: String,
+    pub ocsp: String,
     pub server_name: String,
 }
 
@@ -120,6 +121,7 @@ impl<T> TlsAccept<T> {
         let TlsServerConf {
             crt,
             key,
+            ocsp,
             server_name,
         } = conf;
 
@@ -134,10 +136,16 @@ impl<T> TlsAccept<T> {
             panic!("no certificate or private key supplied")
         };
 
+        let ocsp = if !ocsp.is_empty() {
+            utils::read_ocsp(&ocsp).expect("failed to read ocsp")
+        } else {
+            Vec::new()
+        };
+
         let conf = ServerConfig::builder()
             .with_safe_defaults()
             .with_no_client_auth()
-            .with_single_cert(cert, key)
+            .with_single_cert_with_ocsp_and_sct(cert, key, ocsp, Vec::new())
             .expect("bad certificate or key");
 
         Self {
@@ -151,11 +159,18 @@ impl<T> TlsAccept<T> {
         let TlsServerConf {
             crt,
             key,
+            ocsp,
             server_name,
         } = conf;
 
+        let ocsp = if !ocsp.is_empty() {
+            Some(utils::read_ocsp(&ocsp).expect("failed to read ocsp"))
+        } else {
+            None
+        };
+
         let cert_resolver = if crt.is_empty() && key.is_empty() {
-            utils::new_crt_key_resolver(crt, key, None, None)
+            utils::new_crt_key_resolver(crt, key, ocsp, None)
         } else if !server_name.is_empty() {
             utils::new_self_signed_resolver(server_name)
         } else {
@@ -311,6 +326,8 @@ mod utils {
                 .unwrap_or_else(|| fs::read(path))
                 .map(PrivateKey)
         }
+
+        pub fn read_ocsp(path: &str) -> Result<Vec<u8>> { fs::read(path) }
 
         pub fn generate_self_signed(server_name: &str) -> (Vec<Certificate>, PrivateKey) {
             let self_signed = rcgen::generate_simple_self_signed(vec![server_name.to_string()])

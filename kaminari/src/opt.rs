@@ -77,12 +77,14 @@ pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
 
     let crt = get_opt!(it.clone(), "cert");
     let key = get_opt!(it.clone(), "key");
+    let ocsp = get_opt!(it.clone(), "ocsp");
     let server_name = get_opt!(it.clone(), "servername");
 
     if crt.is_some() && key.is_some() || server_name.is_some() {
         Some(TlsServerConf {
             crt: crt.map_or(String::new(), String::from),
             key: key.map_or(String::new(), String::from),
+            ocsp: ocsp.map_or(String::new(), String::from),
             server_name: server_name.map_or(String::new(), String::from),
         })
     } else {
@@ -185,6 +187,7 @@ mod test {
                     assert_eq!(get_tls_server_conf($s), Some(TlsServerConf{
                         key: String::from($key),
                         crt: String::from($crt),
+                        ocsp: String::new(),
                         server_name: String::from($server_name),
                     }));
                 )+
