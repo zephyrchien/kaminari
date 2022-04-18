@@ -32,6 +32,20 @@ impl MixConnect {
             (Some(ws), Some(tls)) => Wss(WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws)),
         }
     }
+
+    pub fn new_shared(conf: MixClientConf) -> Self {
+        use MixConnect::*;
+        let MixClientConf { ws, tls } = conf;
+        match (ws, tls) {
+            (None, None) => Plain(NopConnect {}),
+            (Some(ws), None) => Ws(WsConnect::new(NopConnect {}, ws)),
+            (None, Some(tls)) => Tls(TlsConnect::new_shared(NopConnect {}, tls)),
+            (Some(ws), Some(tls)) => Wss(WsConnect::new(
+                TlsConnect::new_shared(NopConnect {}, tls),
+                ws,
+            )),
+        }
+    }
 }
 
 impl<S: IOStream> AsyncConnect<S> for MixConnect {
@@ -78,6 +92,19 @@ impl MixAccept {
             (Some(ws), None) => Ws(WsAccept::new(NopAccept {}, ws)),
             (None, Some(tls)) => Tls(TlsAccept::new(NopAccept {}, tls)),
             (Some(ws), Some(tls)) => Wss(WsAccept::new(TlsAccept::new(NopAccept {}, tls), ws)),
+        }
+    }
+
+    pub fn new_shared(conf: MixServerConf) -> Self {
+        use MixAccept::*;
+        let MixServerConf { ws, tls } = conf;
+        match (ws, tls) {
+            (None, None) => Plain(NopAccept {}),
+            (Some(ws), None) => Ws(WsAccept::new(NopAccept {}, ws)),
+            (None, Some(tls)) => Tls(TlsAccept::new_shared(NopAccept {}, tls)),
+            (Some(ws), Some(tls)) => {
+                Wss(WsAccept::new(TlsAccept::new_shared(NopAccept {}, tls), ws))
+            }
         }
     }
 }
