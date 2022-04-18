@@ -169,7 +169,7 @@ impl<T> TlsAccept<T> {
             None
         };
 
-        let cert_resolver = if crt.is_empty() && key.is_empty() {
+        let cert_resolver = if !crt.is_empty() && !key.is_empty() {
             utils::new_crt_key_resolver(crt, key, ocsp, None)
         } else if !server_name.is_empty() {
             utils::new_self_signed_resolver(server_name)
