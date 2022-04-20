@@ -218,3 +218,38 @@ mod stream {
     impl_async_read!(MixServerStream);
     impl_async_write!(MixServerStream);
 }
+
+// ========== type cast ==========
+
+macro_rules! impl_type_cast {
+    ($mix: ident || $([$func: ident :: $member: ident => $ret: ty], )+ ) => {
+        impl $mix {
+            $(
+                pub fn $func(&self) -> Option<&$ret> {
+                    use $mix::*;
+                    if let $member(x) = self {
+                        Some(x)
+                    } else {
+                        None
+                    }
+                }
+            )+
+        }
+    };
+}
+
+impl_type_cast!(
+    MixConnect ||
+        [as_plain :: Plain => NopConnect],
+        [as_ws :: Ws => WsConnect<NopConnect>],
+        [as_tls :: Tls => TlsConnect<NopConnect>],
+        [as_wss :: Wss => WsConnect<TlsConnect<NopConnect>>],
+);
+
+impl_type_cast!(
+    MixAccept ||
+        [as_plain :: Plain => NopAccept],
+        [as_ws :: Ws => WsAccept<NopAccept>],
+        [as_tls :: Tls => TlsAccept<NopAccept>],
+        [as_wss :: Wss => WsAccept<TlsAccept<NopAccept>>],
+);
