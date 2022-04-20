@@ -1,6 +1,6 @@
 [package]
 name = "kaminari-cmd"
-version = "0.4.2"
+version = "0.4.3"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 repository = "https://github.com/zephyrchien/kaminari/cmd"
@@ -9,7 +9,7 @@ readme = "README.md"
 license = "GPL-3.0"
 
 [dependencies]
-kaminari = "0.5.5"
+kaminari = "0.6.0"
 tokio = { version = "1", features = ["net", "macros", "rt-multi-thread", "io-util"] }
 anyhow = "1"
 
