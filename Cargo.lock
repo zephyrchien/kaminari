@@ -157,7 +157,7 @@ dependencies = [
 
 [[package]]
 name = "kaminari-cmd"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "anyhow",
  "kaminari 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
