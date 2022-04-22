@@ -46,7 +46,7 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
             path: String::from(path),
         })
     } else {
-        None
+        panic!("ws: require host and path")
     }
 }
 
@@ -61,11 +61,15 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     let insecure = has_opt!(it.clone(), "insecure");
     let early_data = has_opt!(it.clone(), "0rtt");
 
-    sni.map(|sni| TlsClientConf {
-        sni: String::from(sni),
-        insecure,
-        early_data,
-    })
+    if let Some(sni) = sni {
+        Some(TlsClientConf {
+            sni: String::from(sni),
+            insecure,
+            early_data,
+        })
+    } else {
+        panic!("tls: require sni")
+    }
 }
 
 pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
@@ -88,7 +92,7 @@ pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
             server_name: server_name.map_or(String::new(), String::from),
         })
     } else {
-        None
+        panic!("tls: require cert and key or servername")
     }
 }
 
@@ -98,14 +102,6 @@ mod test {
 
     #[test]
     fn ws_conf() {
-        macro_rules! n {
-            ( $( $s: expr, )+ ) => {{
-                $(
-                    assert_eq!(get_ws_conf($s), None);
-                )+
-            }}
-        }
-
         macro_rules! y {
             ( $( ($s:expr, $host: expr, $path: expr); )+ )=> {
                 $(
@@ -115,6 +111,25 @@ mod test {
                     }));
                 )+
             }
+        }
+
+        y![
+            ("ws;host=a.b.c;path=/", "a.b.c", "/");
+            ("ws;host=a.b.c;path=/abc", "a.b.c", "/abc");
+            ("ws;path=/abc;host=a.b.c", "a.b.c", "/abc");
+            ("ws;path=/abc;host=a.b.c;", "a.b.c", "/abc");
+        ];
+    }
+
+    #[test]
+    #[should_panic]
+    fn ws_conf_err() {
+        macro_rules! n {
+            ( $( $s: expr, )+ ) => {{
+                $(
+                    assert_eq!(get_ws_conf($s), None);
+                )+
+            }}
         }
 
         n![
@@ -128,25 +143,10 @@ mod test {
             "ws;host=a.b.c;path=",
             "ws;host=a.b.c;path=;",
         ];
-
-        y![
-            ("ws;host=a.b.c;path=/", "a.b.c", "/");
-            ("ws;host=a.b.c;path=/abc", "a.b.c", "/abc");
-            ("ws;path=/abc;host=a.b.c", "a.b.c", "/abc");
-            ("ws;path=/abc;host=a.b.c;", "a.b.c", "/abc");
-        ];
     }
 
     #[test]
     fn tls_client_conf() {
-        macro_rules! n {
-            ( $( $s: expr, )+ ) => {{
-                $(
-                    assert_eq!(get_tls_client_conf($s), None);
-                )+
-            }}
-        }
-
         macro_rules! y {
             ( $( ($s:expr, $sni: expr, $insecure: expr, $early_data: expr); )+ )=> {
                 $(
@@ -159,8 +159,6 @@ mod test {
             }
         }
 
-        n!["", "tls", "tls;", "tls;sni", "tls;sni=", "tls;sni=;",];
-
         y![
             ("tls;sni=a.b.c", "a.b.c", false, false);
             ("tls;sni=a.b.c;", "a.b.c", false, false);
@@ -172,15 +170,21 @@ mod test {
     }
 
     #[test]
-    fn tls_server_conf() {
+    #[should_panic]
+    fn tls_client_err() {
         macro_rules! n {
             ( $( $s: expr, )+ ) => {{
                 $(
-                    assert_eq!(get_tls_server_conf($s), None);
+                    assert_eq!(get_tls_client_conf($s), None);
                 )+
             }}
         }
 
+        n!["", "tls", "tls;", "tls;sni", "tls;sni=", "tls;sni=;",];
+    }
+
+    #[test]
+    fn tls_server_conf() {
         macro_rules! y {
             ( $( ($s:expr, $key: expr, $crt: expr, $server_name: expr); )+ )=> {
                 $(
@@ -194,19 +198,6 @@ mod test {
             }
         }
 
-        n![
-            "",
-            "tls",
-            "tls;",
-            "tls;key",
-            "tls;key=",
-            "tls;key=;",
-            "tls;key=/a;",
-            "tls;key=/a;cert",
-            "tls;key=/a;cert=",
-            "tls;key=/a;cert=;",
-        ];
-
         y![
             ("tls;key=/a;cert=/b", "/a", "/b", "");
             ("tls;key=/a;cert=/b;", "/a", "/b", "");
@@ -218,6 +209,31 @@ mod test {
 
             // this is expected
             ("tls;key=/a;cert=/b;servername=a.b.c;", "/a", "/b", "a.b.c");
+        ];
+    }
+
+    #[test]
+    #[should_panic]
+    fn tls_server_err() {
+        macro_rules! n {
+            ( $( $s: expr, )+ ) => {{
+                $(
+                    assert_eq!(get_tls_server_conf($s), None);
+                )+
+            }}
+        }
+
+        n![
+            "",
+            "tls",
+            "tls;",
+            "tls;key",
+            "tls;key=",
+            "tls;key=;",
+            "tls;key=/a;",
+            "tls;key=/a;cert",
+            "tls;key=/a;cert=",
+            "tls;key=/a;cert=;",
         ];
     }
 }
