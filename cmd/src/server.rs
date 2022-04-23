@@ -2,6 +2,8 @@ use std::net::SocketAddr;
 
 use anyhow::Result;
 use tokio::net::{TcpListener, TcpStream};
+use realm_io::{CopyBuffer, bidi_copy_buf};
+
 use kaminari::opt;
 use kaminari::AsyncAccept;
 use kaminari::nop::NopAccept;
@@ -72,12 +74,17 @@ async fn relay<T: AsyncAccept<TcpStream>>(
     local: TcpStream,
     remote: SocketAddr,
     server: Ref<T>,
-) -> Result<()> {
-    let mut local = server.accept(local).await?;
+) -> std::io::Result<()> {
+    let mut buf1 = vec![0u8; 0x2000];
+    let buf2 = vec![0u8; 0x2000];
 
+    let mut local = server.accept(local, &mut buf1).await?;
     let mut remote = TcpStream::connect(remote).await?;
 
-    tokio::io::copy_bidirectional(&mut local, &mut remote).await?;
+    let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
+    let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
 
-    Ok(())
+    let (res, _, _) = bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await;
+
+    res
 }

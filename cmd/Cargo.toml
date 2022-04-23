@@ -9,8 +9,9 @@ readme = "README.md"
 license = "GPL-3.0"
 
 [dependencies]
-kaminari = "0.6.0"
-tokio = { version = "1", features = ["net", "macros", "rt-multi-thread", "io-util"] }
+kaminari = "0.7.0"
+realm_io = "0.2.1"
+tokio = { version = "1", features = ["net", "macros", "rt-multi-thread"] }
 anyhow = "1"
 
 [[bin]]
