@@ -30,10 +30,7 @@ pub fn parse_env() -> Result<(Endpoint, String)> {
 pub fn parse_cmd() -> Result<(Endpoint, String)> {
     let args: Vec<String> = env::args().collect();
 
-    anyhow::ensure!(
-        args.len() == 4,
-        "only allow 3 params: <local> <remote> <options>"
-    );
+    anyhow::ensure!(args.len() == 4, "usage: <local> <remote> <options>");
 
     let local = args[1].to_socket_addrs()?.next().unwrap();
     let remote = args[2].to_socket_addrs()?.next().unwrap();
