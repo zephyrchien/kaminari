@@ -13,7 +13,7 @@ use kaminari::trick::Ref;
 
 use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let (Endpoint { local, remote }, options) = parse_env().or_else(|_| parse_cmd())?;
 
