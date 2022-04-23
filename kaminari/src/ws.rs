@@ -92,13 +92,12 @@ where
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         async move {
-            let mut buf = [0u8; 1024];
-            let stream = self.conn.connect(stream).await?;
+            let stream = self.conn.connect(stream, buf).await?;
             let stream = Endpoint::<_, M::ClientType>::connect_async(
                 stream,
-                &mut buf,
+                buf,
                 &self.conf.host,
                 &self.conf.path,
             )
@@ -130,19 +129,14 @@ where
 
     type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
+    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
         async move {
-            let mut buf = [0u8; 1024];
-            let stream = self.lis.accept(stream).await?;
+            let stream = self.lis.accept(stream, buf).await?;
 
-            let stream = Endpoint::<_, Server>::accept_async(
-                stream,
-                &mut buf,
-                &self.conf.host,
-                &self.conf.path,
-            )
-            .await?
-            .guard();
+            let stream =
+                Endpoint::<_, Server>::accept_async(stream, buf, &self.conf.host, &self.conf.path)
+                    .await?
+                    .guard();
 
             Ok(stream)
         }

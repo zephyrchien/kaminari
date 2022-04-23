@@ -92,10 +92,10 @@ where
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         async move {
             let sni = self.sni.clone();
-            let stream = self.conn.connect(stream).await?;
+            let stream = self.conn.connect(stream, buf).await?;
             self.cc.connect(sni, stream).await
         }
     }
@@ -198,9 +198,9 @@ where
 
     type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
+    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
         async move {
-            let stream = self.lis.accept(stream).await?;
+            let stream = self.lis.accept(stream, buf).await?;
             self.ac.accept(stream).await
         }
     }

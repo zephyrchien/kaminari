@@ -14,7 +14,7 @@ pub trait AsyncConnect<S: IOStream> {
     type ConnectFut<'a>: Future<Output = Result<Self::Stream>>
     where
         Self: 'a;
-    fn connect(&self, stream: S) -> Self::ConnectFut<'_>;
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a>;
 }
 
 pub trait AsyncAccept<S: IOStream> {
@@ -22,7 +22,7 @@ pub trait AsyncAccept<S: IOStream> {
     type AcceptFut<'a>: Future<Output = Result<Self::Stream>>
     where
         Self: 'a;
-    fn accept(&self, stream: S) -> Self::AcceptFut<'_>;
+    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a>;
 }
 
 pub mod ws;

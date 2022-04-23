@@ -53,16 +53,16 @@ impl<S: IOStream> AsyncConnect<S> for MixConnect {
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&self, stream: S) -> Self::ConnectFut<'_> {
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'_> {
         use MixConnect::*;
         use stream::MixClientStream as MixS;
 
         async move {
             match self {
-                Plain(cc) => cc.connect(stream).await.map(MixS::Plain),
-                Ws(cc) => cc.connect(stream).await.map(MixS::Ws),
-                Tls(cc) => cc.connect(stream).await.map(MixS::Tls),
-                Wss(cc) => cc.connect(stream).await.map(MixS::Wss),
+                Plain(cc) => cc.connect(stream, buf).await.map(MixS::Plain),
+                Ws(cc) => cc.connect(stream, buf).await.map(MixS::Ws),
+                Tls(cc) => cc.connect(stream, buf).await.map(MixS::Tls),
+                Wss(cc) => cc.connect(stream, buf).await.map(MixS::Wss),
             }
         }
     }
@@ -114,16 +114,16 @@ impl<S: IOStream> AsyncAccept<S> for MixAccept {
 
     type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&self, stream: S) -> Self::AcceptFut<'_> {
+    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
         use MixAccept::*;
         use stream::MixServerStream as MixS;
 
         async move {
             match self {
-                Plain(ac) => ac.accept(stream).await.map(MixS::Plain),
-                Ws(ac) => ac.accept(stream).await.map(MixS::Ws),
-                Tls(ac) => ac.accept(stream).await.map(MixS::Tls),
-                Wss(ac) => ac.accept(stream).await.map(MixS::Wss),
+                Plain(ac) => ac.accept(stream, buf).await.map(MixS::Plain),
+                Ws(ac) => ac.accept(stream, buf).await.map(MixS::Ws),
+                Tls(ac) => ac.accept(stream, buf).await.map(MixS::Tls),
+                Wss(ac) => ac.accept(stream, buf).await.map(MixS::Wss),
             }
         }
     }

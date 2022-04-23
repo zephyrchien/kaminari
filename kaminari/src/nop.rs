@@ -17,7 +17,7 @@ where
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&self, stream: S) -> Self::ConnectFut<'_> { async move { Ok(stream) } }
+    fn connect(&self, stream: S, _: &mut [u8]) -> Self::ConnectFut<'_> { async move { Ok(stream) } }
 }
 
 impl<S> AsyncAccept<S> for NopAccept
@@ -28,5 +28,5 @@ where
 
     type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&self, stream: S) -> Self::AcceptFut<'_> { async move { Ok(stream) } }
+    fn accept(&self, stream: S, _: &mut [u8]) -> Self::AcceptFut<'_> { async move { Ok(stream) } }
 }
