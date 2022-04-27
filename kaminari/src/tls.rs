@@ -1,7 +1,7 @@
 use std::io::Result;
 use std::future::Future;
 use std::sync::Arc;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
@@ -44,6 +44,18 @@ where
     T: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[tls]{}", self.conn) }
+}
+
+impl<T> Debug for TlsConnect<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TlsConnect")
+            .field("conn", &self.conn)
+            .field("sni", &self.sni)
+            .finish()
+    }
 }
 
 impl<T> TlsConnect<T> {
@@ -149,6 +161,15 @@ where
     T: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[tls]{}", self.lis) }
+}
+
+impl<T> Debug for TlsAccept<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TlsAccept").field("lis", &self.lis).finish()
+    }
 }
 
 impl<T> TlsAccept<T> {

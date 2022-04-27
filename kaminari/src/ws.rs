@@ -28,13 +28,13 @@ impl Display for WsConf {
 }
 
 // =========== client ==========
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Simple {}
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Standard {}
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Fixed {}
 
 pub trait Mode {

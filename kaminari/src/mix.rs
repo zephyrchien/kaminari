@@ -14,7 +14,7 @@ pub struct MixClientConf {
     pub tls: Option<TlsClientConf>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum MixConnect {
     Plain(NopConnect),
     Ws(WsConnect<NopConnect>),
@@ -76,7 +76,7 @@ pub struct MixServerConf {
     pub tls: Option<TlsServerConf>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum MixAccept {
     Plain(NopAccept),
     Ws(WsAccept<NopAccept>),
