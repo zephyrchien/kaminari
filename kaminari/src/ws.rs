@@ -1,6 +1,7 @@
 use std::io::Result;
 use std::future::Future;
 use std::marker::PhantomData;
+use std::fmt::{Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
@@ -18,6 +19,12 @@ pub type WsFixedClientStream<T> = WsStream<T, FixedMaskClient>;
 pub struct WsConf {
     pub host: String,
     pub path: String,
+}
+
+impl Display for WsConf {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "host: {}, path: {}", self.host, self.path)
+    }
 }
 
 // =========== client ==========
@@ -46,11 +53,18 @@ impl Mode for Fixed {
     type ClientType = FixedMaskClient;
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct WsConnect<T, M = Simple> {
     conn: T,
     conf: WsConf,
     _marker: PhantomData<M>,
+}
+
+impl<T, M> Display for WsConnect<T, M>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[ws]{}", self.conn) }
 }
 
 impl<T> WsConnect<T> {
@@ -113,6 +127,13 @@ where
 pub struct WsAccept<T> {
     lis: T,
     conf: WsConf,
+}
+
+impl<T> Display for WsAccept<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[ws]{}", self.lis) }
 }
 
 impl<T> WsAccept<T> {

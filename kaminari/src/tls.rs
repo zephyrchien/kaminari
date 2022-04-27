@@ -1,6 +1,7 @@
 use std::io::Result;
 use std::future::Future;
 use std::sync::Arc;
+use std::fmt::{Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
@@ -21,11 +22,28 @@ pub struct TlsClientConf {
     pub early_data: bool,
 }
 
+impl Display for TlsClientConf {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "sni: {}, insecure: {}, early_data: {}",
+            self.sni, self.insecure, self.early_data
+        )
+    }
+}
+
 #[derive(Clone)]
 pub struct TlsConnect<T> {
     conn: T,
     sni: ServerName,
     cc: TlsConnector,
+}
+
+impl<T> Display for TlsConnect<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[tls]{}", self.conn) }
 }
 
 impl<T> TlsConnect<T> {
@@ -110,10 +128,27 @@ pub struct TlsServerConf {
     pub server_name: String,
 }
 
+impl Display for TlsServerConf {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "cert: {}, key: {}, oscp: {}, server_name: {}",
+            self.crt, self.key, self.ocsp, self.server_name
+        )
+    }
+}
+
 #[derive(Clone)]
 pub struct TlsAccept<T> {
     lis: T,
     ac: TlsAcceptor,
+}
+
+impl<T> Display for TlsAccept<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[tls]{}", self.lis) }
 }
 
 impl<T> TlsAccept<T> {

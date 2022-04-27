@@ -1,13 +1,22 @@
 use std::io::Result;
 use std::future::Future;
+use std::fmt::{Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct NopConnect {}
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct NopAccept {}
+
+impl Display for NopConnect {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[plain]") }
+}
+
+impl Display for NopAccept {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[plain]") }
+}
 
 impl<S> AsyncConnect<S> for NopConnect
 where

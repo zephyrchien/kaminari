@@ -1,5 +1,6 @@
 use std::io::Result;
 use std::future::Future;
+use std::fmt::{Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 use super::nop::{NopAccept, NopConnect};
@@ -253,3 +254,73 @@ impl_type_cast!(
         [as_tls :: Tls => TlsAccept<NopAccept>],
         [as_wss :: Wss => WsAccept<TlsAccept<NopAccept>>],
 );
+
+// ========== display ==========
+
+macro_rules! impl_display {
+    ($mix: ident || $($member: ident,)+ ) => {
+        impl Display for $mix {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                use $mix::*;
+                match self {
+                    $(
+                        $member(x) => write!(f, "{}", x),
+                    )+
+                }
+            }
+        }
+    };
+}
+
+impl_display!(MixConnect || Plain, Ws, Tls, Wss,);
+impl_display!(MixAccept || Plain, Ws, Tls, Wss,);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn print_conn() {
+        let conf = MixClientConf {
+            ws: Some(WsConf {
+                host: String::from("abc"),
+                path: String::from("chat"),
+            }),
+            tls: Some(TlsClientConf {
+                sni: String::from("abc"),
+                insecure: true,
+                early_data: true,
+            }),
+        };
+
+        println!("ws: {}", conf.clone().ws.unwrap());
+        println!("tls: {}", conf.clone().tls.unwrap());
+
+        let conn = MixConnect::new(conf);
+
+        println!("{}", conn);
+    }
+
+    #[test]
+    fn print_lis() {
+        let conf = MixServerConf {
+            ws: Some(WsConf {
+                host: String::from("abc"),
+                path: String::from("chat"),
+            }),
+            tls: Some(TlsServerConf {
+                crt: String::new(),
+                key: String::new(),
+                ocsp: String::new(),
+                server_name: String::from("abc"),
+            }),
+        };
+
+        println!("ws: {}", conf.clone().ws.unwrap());
+        println!("tls: {}", conf.clone().tls.unwrap());
+
+        let lis = MixAccept::new(conf);
+
+        println!("{}", lis);
+    }
+}
