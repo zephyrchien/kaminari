@@ -22,13 +22,20 @@ async fn main() -> Result<()> {
 
     eprintln!("listen: {}", &local);
     eprintln!("remote: {}", &remote);
-    eprintln!("ws: {:?}", &ws);
-    eprintln!("tls: {:?}", &tls);
+
+    if let Some(ws) = &ws {
+        eprintln!("ws: {}", ws)
+    }
+
+    if let Some(tls) = &tls {
+        eprintln!("tls: {}", &tls);
+    }
 
     let lis = TcpListener::bind(local).await?;
 
     macro_rules! run {
         ($cc: expr) => {
+            println!("connect: {}", $cc.as_ref());
             loop {
                 match lis.accept().await {
                     Ok((stream, _)) => {
