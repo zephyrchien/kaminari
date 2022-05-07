@@ -122,6 +122,7 @@ dependencies = [
  "rustls-pemfile",
  "tokio",
  "tokio-rustls",
+ "udpflow",
  "webpki-roots",
 ]
 
@@ -164,9 +165,9 @@ checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
 
 [[package]]
 name = "lightws"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52355f151b7652f070b36ca2ab766f2f85c42e1c417507e982dd7dacf11465b0"
+checksum = "938940b6a181913c2c87d4283c45c0bd75dbd18f0336b839cd4bac88fbd5d7a4"
 dependencies = [
  "base64 0.20.0-alpha.1",
  "cfg-if",
@@ -458,6 +459,15 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "udpflow"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdcd3eb84a09ccdb41034d5d251061c6c906fc466a4589a178eaebe23c2451df"
+dependencies = [
+ "tokio",
+]
 
 [[package]]
 name = "unicode-xid"
