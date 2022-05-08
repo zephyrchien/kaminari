@@ -9,42 +9,70 @@ use std::fmt::{Display, Formatter};
 
 use super::{IOStream, AsyncAccept, AsyncConnect};
 
-#[derive(Debug, Clone, Copy)]
-pub struct UotConnect {}
-
-#[derive(Debug, Clone, Copy)]
-pub struct UotAccept {}
-
-impl Display for UotConnect {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[uot]") }
+#[derive(Debug, Clone)]
+pub struct UotConnect<T> {
+    conn: T,
 }
 
-impl Display for UotAccept {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[uot]") }
+#[derive(Debug, Clone)]
+pub struct UotAccept<T> {
+    lis: T,
 }
 
-impl<S> AsyncConnect<S> for UotConnect
+impl<T> UotConnect<T> {
+    #[inline]
+    pub const fn new(conn: T) -> Self { Self { conn } }
+}
+
+impl<T> UotAccept<T> {
+    #[inline]
+    pub const fn new(lis: T) -> Self { Self { lis } }
+}
+
+impl<T> Display for UotConnect<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[uot]{}", self.conn) }
+}
+
+impl<T> Display for UotAccept<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[uot]{}", self.lis) }
+}
+
+impl<T, S> AsyncConnect<S> for UotConnect<T>
 where
     S: IOStream,
+    T: AsyncConnect<S>,
 {
-    type Stream = UotStream<S>;
+    type Stream = UotStream<T::Stream>;
 
     type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn connect(&self, stream: S, _: &mut [u8]) -> Self::ConnectFut<'_> {
-        async move { Ok(UotStream::new(stream)) }
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
+        async move {
+            let stream = self.conn.connect(stream, buf).await?;
+            Ok(UotStream::new(stream))
+        }
     }
 }
 
-impl<S> AsyncAccept<S> for UotAccept
+impl<S, T> AsyncAccept<S> for UotAccept<T>
 where
     S: IOStream,
+    T: AsyncAccept<S>,
 {
-    type Stream = UotStream<S>;
+    type Stream = UotStream<T::Stream>;
 
     type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
 
-    fn accept(&self, stream: S, _: &mut [u8]) -> Self::AcceptFut<'_> {
-        async move { Ok(UotStream::new(stream)) }
+    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
+        async move {
+            let stream = self.lis.accept(stream, buf).await?;
+            Ok(UotStream::new(stream))
+        }
     }
 }
