@@ -58,12 +58,21 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     }
 
     let sni = get_opt!(it.clone(), "sni");
+    let alpn = get_opt!(it.clone(), "alpn");
     let insecure = has_opt!(it.clone(), "insecure");
     let early_data = has_opt!(it.clone(), "0rtt");
 
     if let Some(sni) = sni {
+        let alpn = alpn.map_or(Vec::new(), |s| {
+            s.split(',')
+                .map(str::trim)
+                .map(Vec::from)
+                .filter(|v| !v.is_empty())
+                .collect()
+        });
         Some(TlsClientConf {
             sni: String::from(sni),
+            alpn,
             insecure,
             early_data,
         })
@@ -148,10 +157,12 @@ mod test {
     #[test]
     fn tls_client_conf() {
         macro_rules! y {
-            ( $( ($s:expr, $sni: expr, $insecure: expr, $early_data: expr); )+ )=> {
+            ( $( ($s:expr, $sni: expr, $alpn: expr, $insecure: expr, $early_data: expr); )+ )=> {
                 $(
                     assert_eq!(get_tls_client_conf($s), Some(TlsClientConf{
                         sni: String::from($sni),
+                        alpn: $alpn.split(',').map(str::trim).map(Vec::from)
+                        .filter(|v|!v.is_empty()).collect(),
                         insecure: $insecure,
                         early_data: $early_data,
                     }));
@@ -160,12 +171,12 @@ mod test {
         }
 
         y![
-            ("tls;sni=a.b.c", "a.b.c", false, false);
-            ("tls;sni=a.b.c;", "a.b.c", false, false);
-            ("tls;sni=a.b.c;insecure", "a.b.c", true, false);
-            ("tls;sni=a.b.c;insecure;", "a.b.c", true, false);
-            ("tls;sni=a.b.c;insecure;0rtt", "a.b.c", true, true);
-            ("tls;sni=a.b.c;insecure;0rtt;", "a.b.c", true, true);
+            ("tls;sni=a.b.c", "a.b.c", "", false, false);
+            ("tls;sni=a.b.c;alpn=h2", "a.b.c", "h2", false, false);
+            ("tls;sni=a.b.c;alpn=http/1.1;insecure", "a.b.c", "http/1.1", true, false);
+            ("tls;sni=a.b.c;alpn=h2,http/1.1;insecure;", "a.b.c", "h2,http/1.1", true, false);
+            ("tls;sni=a.b.c;alpn=h2,http/1.1;insecure;0rtt", "a.b.c", "h2,http/1.1", true, true);
+            ("tls;sni=a.b.c;alpn=h2,http/1.1;insecure;0rtt;" ,"a.b.c", "h2,http/1.1", true, true);
         ];
     }
 

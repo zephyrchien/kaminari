@@ -18,16 +18,32 @@ pub use tokio_rustls::server::TlsStream as TlsServerStream;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TlsClientConf {
     pub sni: String,
+    pub alpn: Vec<Vec<u8>>,
     pub insecure: bool,
     pub early_data: bool,
 }
 
 impl Display for TlsClientConf {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut alpn = [0u8; 64];
+        let mut cursor = 1;
+        alpn[0] = b'[';
+        for (i, b) in self.alpn.iter().enumerate() {
+            alpn[cursor..cursor + b.len()].copy_from_slice(b);
+            cursor += b.len();
+            if i != self.alpn.len() - 1 {
+                alpn[cursor..cursor + 2].copy_from_slice(b", ");
+                cursor += 2;
+            }
+        }
+        alpn[cursor] = b']';
+
+        let alpn = std::str::from_utf8(&alpn[..cursor + 1]).unwrap();
+
         write!(
             f,
-            "sni: {}, insecure: {}, early_data: {}",
-            self.sni, self.insecure, self.early_data
+            "sni: {}, alpn: {}, insecure: {}, early_data: {}",
+            self.sni, alpn, self.insecure, self.early_data
         )
     }
 }
@@ -62,6 +78,7 @@ impl<T> TlsConnect<T> {
     pub fn new(conn: T, conf: TlsClientConf) -> Self {
         let TlsClientConf {
             sni,
+            alpn,
             insecure,
             early_data,
         } = conf;
@@ -80,6 +97,7 @@ impl<T> TlsConnect<T> {
         };
 
         conf.enable_early_data = early_data;
+        conf.alpn_protocols = alpn;
 
         Self {
             conn,
@@ -92,6 +110,7 @@ impl<T> TlsConnect<T> {
     pub fn new_shared(conn: T, conf: TlsClientConf) -> Self {
         let TlsClientConf {
             sni,
+            alpn,
             insecure,
             early_data,
         } = conf;
@@ -104,6 +123,7 @@ impl<T> TlsConnect<T> {
             .with_no_client_auth();
 
         conf.enable_early_data = early_data;
+        conf.alpn_protocols = alpn;
 
         Self {
             conn,

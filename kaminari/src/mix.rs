@@ -288,6 +288,7 @@ mod test {
             }),
             tls: Some(TlsClientConf {
                 sni: String::from("abc"),
+                alpn: vec![Vec::from("h2"), Vec::from("http/1.1")],
                 insecure: true,
                 early_data: true,
             }),
