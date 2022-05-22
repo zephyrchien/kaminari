@@ -83,6 +83,8 @@ Client side options:
 
 - `sni=<sni>`* : set sni.
 
+- `alpn=<alpn>`: set alpn. e.g.: `h2,http/1.1`.
+
 - `0rtt`: enable early data.
 
 - `insecure`: skip server cert verification.

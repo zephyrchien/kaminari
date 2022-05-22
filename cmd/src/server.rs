@@ -91,7 +91,5 @@ async fn relay<T: AsyncAccept<TcpStream>>(
     let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
     let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
 
-    let (res, _, _) = bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await;
-
-    res
+    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
 }
