@@ -1,11 +1,12 @@
-name: release
+name: build
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
-  release:
+  build-all:
     strategy:
       fail-fast: false
       matrix:
@@ -99,12 +100,11 @@ jobs:
           args: --release -p kaminari-cmd --target=${{ matrix.target }}
       - name: pack
         run: |
-          mkdir -p release-${{ matrix.target }}
-          cd release-${{ matrix.target }}
+          mkdir -p build-${{ matrix.target }}
+          cd build-${{ matrix.target }}
           tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris${{ matrix.file-ext }} kaminaric${{ matrix.file-ext }}
-          openssl dgst -sha256 -r kaminari-${{ matrix.target }}.tar.gz > kaminari-${{ matrix.target }}.sha256
-
-      - name: release
-        uses: softprops/action-gh-release@v1
+      - name: upload
+        uses: actions/upload-artifact@v2
         with:
-          files: release-${{ matrix.target }}/*
+          name: kaminari-${{ matrix.target }}.tar.gz
+          path: build-${{ matrix.target }}/kaminari-${{ matrix.target }}.tar.gz
