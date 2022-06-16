@@ -25,10 +25,18 @@ pub trait AsyncAccept<S: IOStream> {
     fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a>;
 }
 
-pub mod ws;
 pub mod nop;
-pub mod tls;
-pub mod uot;
-pub mod mix;
 pub mod opt;
 pub mod trick;
+
+#[cfg(feature = "ws")]
+pub mod ws;
+
+#[cfg(feature = "tls")]
+pub mod tls;
+
+#[cfg(feature = "uot")]
+pub mod uot;
+
+#[cfg(feature = "mix")]
+pub mod mix;

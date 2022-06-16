@@ -1,7 +1,10 @@
 #![allow(clippy::nonminimal_bool)]
 #![macro_use]
 
+#[cfg(feature = "ws")]
 use super::ws::WsConf;
+
+#[cfg(feature = "tls")]
 use super::tls::{TlsClientConf, TlsServerConf};
 
 #[macro_export]
@@ -30,6 +33,7 @@ macro_rules! get_opt {
 pub use has_opt;
 pub use get_opt;
 
+#[cfg(feature = "ws")]
 pub fn get_ws_conf(s: &str) -> Option<WsConf> {
     let it = s.split(';').map(|x| x.trim());
 
@@ -50,6 +54,7 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
     }
 }
 
+#[cfg(feature = "tls")]
 pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     let it = s.split(';').map(|x| x.trim());
 
@@ -81,6 +86,7 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     }
 }
 
+#[cfg(feature = "tls")]
 pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
     let it = s.split(';').map(|x| x.trim());
 
@@ -106,10 +112,12 @@ pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
 }
 
 #[cfg(test)]
+#[cfg(any(feature = "ws", feature = "tls"))]
 mod test {
     use super::*;
 
     #[test]
+    #[cfg(feature = "ws")]
     fn ws_conf() {
         macro_rules! y {
             ( $( ($s:expr, $host: expr, $path: expr); )+ )=> {
@@ -132,6 +140,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[cfg(feature = "ws")]
     fn ws_conf_err() {
         macro_rules! n {
             ( $( $s: expr, )+ ) => {{
@@ -155,6 +164,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "tls")]
     fn tls_client_conf() {
         macro_rules! y {
             ( $( ($s:expr, $sni: expr, $alpn: expr, $insecure: expr, $early_data: expr); )+ )=> {
@@ -182,6 +192,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[cfg(feature = "tls")]
     fn tls_client_err() {
         macro_rules! n {
             ( $( $s: expr, )+ ) => {{
@@ -195,6 +206,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "tls")]
     fn tls_server_conf() {
         macro_rules! y {
             ( $( ($s:expr, $key: expr, $crt: expr, $server_name: expr); )+ )=> {
@@ -225,6 +237,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[cfg(feature = "tls")]
     fn tls_server_err() {
         macro_rules! n {
             ( $( $s: expr, )+ ) => {{
