@@ -41,7 +41,10 @@ async fn main() -> Result<()> {
                     Ok((stream, _)) => {
                         tokio::spawn(relay(stream, remote, $cc));
                     }
-                    Err(e) => eprintln!("accept error: {}", e),
+                    Err(e) => {
+                        eprintln!("accept error: {}", e);
+                        break;
+                    }
                 }
             }
         };
@@ -87,6 +90,8 @@ async fn main() -> Result<()> {
             run_ws_each!(client);
         }
     };
+
+    Ok(())
 }
 
 async fn relay<T>(mut local: TcpStream, remote: SocketAddr, client: Ref<T>) -> std::io::Result<()>

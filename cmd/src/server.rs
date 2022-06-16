@@ -51,7 +51,10 @@ async fn main() -> Result<()> {
                     Ok((stream, _)) => {
                         tokio::spawn(relay(stream, remote, $ac));
                     }
-                    Err(e) => eprintln!("accept error: {}", e),
+                    Err(e) => {
+                        eprintln!("accept error: {}", e);
+                        break;
+                    }
                 }
             }
         };
@@ -75,6 +78,8 @@ async fn main() -> Result<()> {
             run!(Ref::new(&server));
         }
     };
+
+    Ok(())
 }
 
 async fn relay<T: AsyncAccept<TcpStream>>(
