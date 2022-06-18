@@ -1,6 +1,6 @@
 [package]
 name = "kaminari-cmd"
-version = "0.5.4"
+version = "0.5.5"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 repository = "https://github.com/zephyrchien/kaminari/cmd"
@@ -11,7 +11,7 @@ license = "GPL-3.0"
 [dependencies]
 anyhow = "1"
 realm_io = "0.3.2"
-kaminari = { version = "0.9.0", features = ["ws", "tls"] }
+kaminari = { version = "0.9.1", features = ["ws", "tls"] }
 tokio = { version = "1.9", features = ["rt", "net", "macros"] }
 
 [[bin]]
