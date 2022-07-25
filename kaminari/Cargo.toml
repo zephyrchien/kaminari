@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.9.1"
+version = "0.9.2"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -26,14 +26,14 @@ tokio = "1.9"
 lazy_static = "1"
 
 # ws
-lightws = { version = "0.6.5", features = ["unsafe_auto_mask_write"], optional = true }
+lightws = { version = "0.6.6", features = ["unsafe_auto_mask_write"], optional = true }
 
 # uot
 udpflow = { version = "0.1.0", optional = true }
 
 # tls
-tokio-rustls = { version = "0.23.3", features = ["early-data", "dangerous_configuration"], optional = true }
-webpki-roots = { version = "0.22.3", optional = true }
+tokio-rustls = { version = "0.23.4", features = ["early-data", "dangerous_configuration"], optional = true }
+webpki-roots = { version = "0.22.4", optional = true }
 rustls-pemfile = { version = "1", optional = true }
 rcgen = {version = "0.9", optional = true }
 
