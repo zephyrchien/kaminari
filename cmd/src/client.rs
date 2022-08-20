@@ -5,11 +5,12 @@ use tokio::net::{TcpListener, TcpStream};
 use realm_io::{CopyBuffer, bidi_copy_buf};
 
 use kaminari::opt;
+use kaminari::trick::Ref;
 use kaminari::AsyncConnect;
 use kaminari::nop::NopConnect;
 use kaminari::ws::WsConnect;
+#[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
 use kaminari::tls::TlsConnect;
-use kaminari::trick::Ref;
 
 use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
@@ -18,6 +19,7 @@ async fn main() -> Result<()> {
     let (Endpoint { local, remote }, options) = parse_env().or_else(|_| parse_cmd())?;
 
     let ws = opt::get_ws_conf(&options);
+    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
     let tls = opt::get_tls_client_conf(&options);
 
     eprintln!("listen: {}", &local);
@@ -27,6 +29,7 @@ async fn main() -> Result<()> {
         eprintln!("ws: {}", ws)
     }
 
+    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
     if let Some(tls) = &tls {
         eprintln!("tls: {}", &tls);
     }
@@ -72,6 +75,7 @@ async fn main() -> Result<()> {
         }
     }
 
+    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
     match (ws, tls) {
         (None, None) => {
             let client = NopConnect {};
@@ -90,6 +94,15 @@ async fn main() -> Result<()> {
             run_ws_each!(client);
         }
     };
+
+    #[cfg(not(any(feature="tls-rustls", feature="tls-openssl")))]
+    if let Some(ws) = ws {
+        let client = WsConnect::new(NopConnect {}, ws);
+        run_ws_each!(client);
+    } else {
+        let client = NopConnect {};
+        run!(Ref::new(&client));
+    }
 
     Ok(())
 }
