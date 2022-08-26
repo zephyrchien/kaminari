@@ -5,8 +5,6 @@
 [![downloads](https://img.shields.io/github/downloads/zephyrchien/kaminari/total?color=green)](https://github.com/zephyrchien/kaminari/releases)
 [![telegram](https://img.shields.io/badge/-telegram-blue?style=flat&color=grey&logo=telegram)](https://t.me/+zKbZTvQE2XtiYmIx)
 
-[English](README.md) | [简体中文](README-zh.md)
-
 The ever fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
 
 ## Intro
@@ -15,7 +13,7 @@ The ever fast websocket tunnel built on top of [lightws](https://github.com/zeph
 
 - Server side receives [tcp/ws/tls/wss] then sends tcp.
 
-- Compatible with shadowsocks [SIP003 plugin](https://shadowsocks.org/en/wiki/Plugin.html).
+- Compatible with shadowsocks [SIP003 plugin](https://shadowsocks.org/guide/sip003.html).
 
 ```text
  tcp                           ws/tls/wss                           tcp
