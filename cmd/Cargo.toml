@@ -10,7 +10,8 @@ license = "GPL-3.0"
 
 [dependencies]
 anyhow = "1"
-realm_io = "0.3.2"
+realm_io = "0.3.4"
+realm_syscall = "0.1.6"
 kaminari = { version = "0.9.2", features = ["ws"] }
 tokio = { version = "1.9", features = ["rt", "net", "macros"] }
 

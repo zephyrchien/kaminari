@@ -9,7 +9,7 @@ use kaminari::trick::Ref;
 use kaminari::AsyncAccept;
 use kaminari::nop::NopAccept;
 use kaminari::ws::WsAccept;
-#[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
+#[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
 use kaminari::tls::TlsAccept;
 
 use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
 
     let ws = opt::get_ws_conf(&options);
 
-    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
+    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
     let tls = opt::get_tls_server_conf(&options);
 
     eprintln!("listen: {}", &local);
@@ -40,12 +40,15 @@ async fn main() -> Result<()> {
         eprintln!("ws: {}", ws)
     }
 
-    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
+    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
     if let Some(tls) = &tls {
         eprintln!("tls: {}", &tls);
     }
 
     let lis = TcpListener::bind(local).await?;
+
+    #[cfg(all(unix, not(target_os = "android")))]
+    let _ = realm_syscall::bump_nofile_limit();
 
     macro_rules! run {
         ($ac: expr) => {
@@ -64,7 +67,7 @@ async fn main() -> Result<()> {
         };
     }
 
-    #[cfg(any(feature="tls-rustls", feature="tls-openssl"))]
+    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
     match (ws, tls) {
         (None, None) => {
             let server = NopAccept {};
@@ -84,7 +87,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    #[cfg(not(any(feature="tls-rustls", feature="tls-openssl")))]
+    #[cfg(not(any(feature = "tls-rustls", feature = "tls-openssl")))]
     if let Some(ws) = ws {
         let server = WsAccept::new(NopAccept {}, ws);
         run!(Ref::new(&server));

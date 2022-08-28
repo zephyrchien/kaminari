@@ -30,6 +30,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "boxfnonce"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5988cb1d626264ac94100be357308f29ff7cbdd3b36bda27f450a4ee3f713426"
+
+[[package]]
 name = "bumpalo"
 version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,6 +70,16 @@ checksum = "57952ca27b5e3606ff4dd79b0020231aaf9d6aa76dc05fd30137538c50bd3ce8"
 dependencies = [
  "generic-array",
  "typenum",
+]
+
+[[package]]
+name = "daemonize"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70c24513e34f53b640819f0ac9f705b673fcf4006d7aab8778bee72ebfc89815"
+dependencies = [
+ "boxfnonce",
+ "libc",
 ]
 
 [[package]]
@@ -148,6 +164,7 @@ dependencies = [
  "anyhow",
  "kaminari 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "realm_io",
+ "realm_syscall",
  "tokio",
 ]
 
@@ -316,12 +333,23 @@ dependencies = [
 
 [[package]]
 name = "realm_io"
-version = "0.3.2"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6acf08c84d59f96c48b46d5e8bce63d311469a9e43ee971a246344f6ad4d081b"
+checksum = "765e31d68e3708d65d98c7f66023c3715711614553ec279499ef5c1a2544e256"
 dependencies = [
  "libc",
  "tokio",
+]
+
+[[package]]
+name = "realm_syscall"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd1c4fd7ea55ef4a956906e911f99250f51154f25f699aca154d9cefe94a7c9a"
+dependencies = [
+ "daemonize",
+ "libc",
+ "socket2",
 ]
 
 [[package]]
