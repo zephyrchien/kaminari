@@ -131,20 +131,6 @@ dependencies = [
 [[package]]
 name = "kaminari"
 version = "0.9.2"
-dependencies = [
- "lazy_static",
- "lightws",
- "rcgen",
- "rustls-pemfile",
- "tokio",
- "tokio-rustls",
- "udpflow",
- "webpki-roots",
-]
-
-[[package]]
-name = "kaminari"
-version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29e5a1c47c8eb88c87a8c60293723377e92ceb7716cc43b4f640b15ef6bee5bb"
 dependencies = [
@@ -158,11 +144,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "kaminari"
+version = "0.9.3"
+dependencies = [
+ "lazy_static",
+ "lightws",
+ "rcgen",
+ "rustls-pemfile",
+ "tokio",
+ "tokio-rustls",
+ "udpflow",
+ "webpki-roots",
+]
+
+[[package]]
 name = "kaminari-cmd"
 version = "0.5.7"
 dependencies = [
  "anyhow",
- "kaminari 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kaminari 0.9.2",
  "realm_io",
  "realm_syscall",
  "tokio",
@@ -182,9 +182,9 @@ checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
 
 [[package]]
 name = "lightws"
-version = "0.6.6"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4322731125a8d3696b5d0ae9e404d4dd7292d2d03c2389f42f9d9171e26ccd16"
+checksum = "44976e25fccca00f3810c92b4331f7dfdc53bda546e3971d6842119419a1f2a9"
 dependencies = [
  "base64 0.20.0-alpha.1",
  "cfg-if",
