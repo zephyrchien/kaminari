@@ -140,7 +140,7 @@ where
 {
     type Stream = TlsClientStream<T::Stream>;
 
-    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
+    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> +'a where Self:'a;
 
     fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         async move {
@@ -272,7 +272,7 @@ where
 {
     type Stream = TlsServerStream<T::Stream>;
 
-    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
+    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> +'a where Self:'a;
 
     fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
         async move {
