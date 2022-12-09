@@ -5,7 +5,7 @@
 [![downloads](https://img.shields.io/github/downloads/zephyrchien/kaminari/total?color=green)](https://github.com/zephyrchien/kaminari/releases)
 [![telegram](https://img.shields.io/badge/-telegram-blue?style=flat&color=grey&logo=telegram)](https://t.me/+zKbZTvQE2XtiYmIx)
 
-The ever fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
+Blazing-fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
 
 ## Intro
 
