@@ -2,19 +2,24 @@ use std::net::SocketAddr;
 
 use anyhow::Result;
 use tokio::net::{TcpListener, TcpStream};
-use realm_io::{CopyBuffer, bidi_copy_buf};
+use realm_io::{CopyBuffer, bidi_copy_buf, buf_size};
 
 use kaminari::opt;
-use kaminari::trick::Ref;
 use kaminari::AsyncAccept;
-use kaminari::nop::NopAccept;
-use kaminari::ws::WsAccept;
-#[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
-use kaminari::tls::TlsAccept;
+use kaminari::uot::UotAccept;
+use kaminari::mix::{MixAccept, MixServerConf};
+use tokio::net::UdpSocket;
+use udpflow::UdpStreamRemote;
 
-use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
+use kaminari_cmd::{Endpoint, parse_cmd, parse_env, UDP_MAX_BUF_LENGTH};
 
-#[tokio::main(flavor = "current_thread")]
+#[derive(Clone)]
+enum Streamer {
+    TcpStream(SocketAddr),
+    UdpStream(SocketAddr),
+}
+
+#[tokio::main]
 async fn main() -> Result<()> {
     let (Endpoint { local, remote }, options) = parse_env()
         .map(|(Endpoint { local, remote }, opt)| {
@@ -29,89 +34,84 @@ async fn main() -> Result<()> {
         .or_else(|_| parse_cmd())?;
 
     let ws = opt::get_ws_conf(&options);
-
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
     let tls = opt::get_tls_server_conf(&options);
 
     eprintln!("listen: {}", &local);
     eprintln!("remote: {}", &remote);
 
     if let Some(ws) = &ws {
-        eprintln!("ws: {}", ws)
+        eprintln!("ws: {ws}")
     }
 
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
     if let Some(tls) = &tls {
         eprintln!("tls: {}", &tls);
     }
+
+    let uot = opt::get_uot_conf(&options);
+    if uot.is_some() {
+        eprintln!("UDP over TCP enabled.");
+    }
+
+    let acceptor = MixAccept::new_shared(MixServerConf { ws, tls });
+
+    let uot = opt::get_uot_conf(&options);
+
+    let remote = match uot {
+        Some(_) => Streamer::UdpStream(remote),
+        None => Streamer::TcpStream(remote),
+    };
 
     let lis = TcpListener::bind(local).await?;
 
     #[cfg(all(unix, not(target_os = "android")))]
     let _ = realm_syscall::bump_nofile_limit();
 
-    macro_rules! run {
-        ($ac: expr) => {
-            println!("accept: {}", $ac.as_ref());
-            loop {
-                match lis.accept().await {
-                    Ok((stream, _)) => {
-                        tokio::spawn(relay(stream, remote, $ac));
-                    }
-                    Err(e) => {
-                        eprintln!("accept error: {}", e);
-                        break;
-                    }
-                }
+    println!("accept: {}", &acceptor);
+    loop {
+        match lis.accept().await {
+            Ok((stream, _)) => {
+                tokio::spawn(relay(stream, remote.clone(), acceptor.clone()));
             }
-        };
-    }
-
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
-    match (ws, tls) {
-        (None, None) => {
-            let server = NopAccept {};
-            run!(Ref::new(&server));
+            Err(e) => {
+                eprintln!("accept error: {e}");
+                break;
+            }
         }
-        (Some(ws), None) => {
-            let server = WsAccept::new(NopAccept {}, ws);
-            run!(Ref::new(&server));
-        }
-        (None, Some(tls)) => {
-            let server = TlsAccept::new(NopAccept {}, tls);
-            run!(Ref::new(&server));
-        }
-        (Some(ws), Some(tls)) => {
-            let server = WsAccept::new(TlsAccept::new(NopAccept {}, tls), ws);
-            run!(Ref::new(&server));
-        }
-    };
-
-    #[cfg(not(any(feature = "tls-rustls", feature = "tls-openssl")))]
-    if let Some(ws) = ws {
-        let server = WsAccept::new(NopAccept {}, ws);
-        run!(Ref::new(&server));
-    } else {
-        let server = NopAccept {};
-        run!(Ref::new(&server));
     }
 
     Ok(())
 }
 
-async fn relay<T: AsyncAccept<TcpStream>>(
-    local: TcpStream,
-    remote: SocketAddr,
-    server: Ref<T>,
-) -> std::io::Result<()> {
-    let mut buf1 = vec![0u8; 0x2000];
-    let buf2 = vec![0u8; 0x2000];
+async fn relay<T>(local: TcpStream, remote: Streamer, server: T) -> std::io::Result<()>
+where
+    T: AsyncAccept<TcpStream>,
+{
+    match remote {
+        Streamer::TcpStream(remote) => {
+            let mut buf1 = vec![0u8; buf_size()];
+            let buf2 = vec![0u8; buf_size()];
+            let mut local = server.accept(local, &mut buf1).await?;
+            let mut remote = TcpStream::connect(remote).await?;
 
-    let mut local = server.accept(local, &mut buf1).await?;
-    let mut remote = TcpStream::connect(remote).await?;
+            let buf1 = CopyBuffer::new(buf1);
+            let buf2 = CopyBuffer::new(buf2);
 
-    let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
-    let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
+            bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
+        }
+        Streamer::UdpStream(remote) => {
+            println!("{} -> {remote}", local.peer_addr()?);
+            let mut buf1 = vec![0u8; UDP_MAX_BUF_LENGTH];
+            let buf2 = vec![0u8; UDP_MAX_BUF_LENGTH];
+            let server = UotAccept::new(server);
+            let mut local = server.accept(local, &mut buf1).await?;
 
-    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
+            let socket = UdpSocket::bind("127.0.0.1:0").await?;
+            let mut remote = UdpStreamRemote::new(socket, remote);
+
+            let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
+            let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
+
+            bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
+        }
+    }
 }
