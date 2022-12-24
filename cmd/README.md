@@ -5,11 +5,11 @@
 [![downloads](https://img.shields.io/github/downloads/zephyrchien/kaminari/total?color=green)](https://github.com/zephyrchien/kaminari/releases)
 [![telegram](https://img.shields.io/badge/-telegram-blue?style=flat&color=grey&logo=telegram)](https://t.me/+zKbZTvQE2XtiYmIx)
 
-A blazing fast TCP and UDP tunnel.
+A blazing fast TCP, TLS and WebSocket tunnel.
 
 ## Intro
 
-- Client side listen on tcp or udp and sends traffics through [tcp/ws/tls/wss] to server side.
+- Client side listens on tcp or udp and sends traffics through [tcp/ws/tls/wss] to server side.
 
 - Server side receives the traffics then sends them to desginated remote through tcp or udp .
 
