@@ -99,11 +99,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn relay<T: AsyncAccept<TcpStream>>(
-    local: TcpStream,
-    remote: SocketAddr,
-    server: Ref<T>,
-) -> std::io::Result<()> {
+#[rustfmt::skip]
+async fn relay<T>(local: TcpStream, remote: SocketAddr, server: Ref<T>) -> std::io::Result<()>
+where
+    T: AsyncAccept<TcpStream>,
+{
     let mut buf1 = vec![0u8; 0x2000];
     let buf2 = vec![0u8; 0x2000];
 
@@ -113,5 +113,5 @@ async fn relay<T: AsyncAccept<TcpStream>>(
     let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
     let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
 
-    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
+    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await.map(|_| ())
 }
