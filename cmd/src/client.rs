@@ -97,7 +97,7 @@ where
     let buf1 = CopyBuffer::new(buf1.into_boxed_slice());
     let buf2 = CopyBuffer::new(buf2.into_boxed_slice());
 
-    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await
+    bidi_copy_buf(&mut local, &mut remote, buf1, buf2).await.map(|_| ())
 }
 
 async fn relay_uot<T>(

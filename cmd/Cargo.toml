@@ -10,10 +10,10 @@ license = "GPL-3.0"
 
 [dependencies]
 anyhow = "1"
-realm_io = "0.3.4"
+realm_io = "0.4.0"
 realm_syscall = "0.1.6"
 kaminari = { path = "../kaminari", features = ["all"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
 udpflow = "0.1"
 
 [[bin]]
