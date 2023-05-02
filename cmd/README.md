@@ -117,8 +117,6 @@ openssl ocsp -issuer <path/to/ca> \
 
 use `uot` to enable udp over tcp feature.
 
-Note: Currently, `uot` option works independently or with tls options.
-
 ### Examples
 
 tcp ⇋ ws --- ws ⇋ tcp:
