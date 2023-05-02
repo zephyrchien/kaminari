@@ -33,6 +33,17 @@ macro_rules! get_opt {
 pub use has_opt;
 pub use get_opt;
 
+#[cfg(feature = "uot")]
+pub fn get_uot_conf(s: &str) -> Option<()> {
+    let it = s.split(';').map(|x| x.trim());
+
+    if !has_opt!(it.clone(), "uot") {
+        return None;
+    }
+
+    Some(())
+}
+
 #[cfg(feature = "ws")]
 pub fn get_ws_conf(s: &str) -> Option<WsConf> {
     let it = s.split(';').map(|x| x.trim());
@@ -41,6 +52,8 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
         return None;
     }
 
+    let mask_mode = get_opt!(it.clone(), "mask");
+
     let host = get_opt!(it.clone(), "host");
     let path = get_opt!(it.clone(), "path");
 
@@ -48,6 +61,7 @@ pub fn get_ws_conf(s: &str) -> Option<WsConf> {
         Some(WsConf {
             host: String::from(host),
             path: String::from(path),
+            mask_mode: mask_mode.into(),
         })
     } else {
         panic!("ws: require host and path")
@@ -119,22 +133,24 @@ mod test {
     #[test]
     #[cfg(feature = "ws")]
     fn ws_conf() {
+        use crate::ws::MaskMode;
         macro_rules! y {
-            ( $( ($s:expr, $host: expr, $path: expr); )+ )=> {
+            ( $( ($s:expr, $host: expr, $path: expr, $mask: expr); )+ )=> {
                 $(
                     assert_eq!(get_ws_conf($s), Some(WsConf{
                         host: String::from($host),
                         path: String::from($path),
+                        mask_mode: $mask,
                     }));
                 )+
             }
         }
 
         y![
-            ("ws;host=a.b.c;path=/", "a.b.c", "/");
-            ("ws;host=a.b.c;path=/abc", "a.b.c", "/abc");
-            ("ws;path=/abc;host=a.b.c", "a.b.c", "/abc");
-            ("ws;path=/abc;host=a.b.c;", "a.b.c", "/abc");
+            ("ws;host=a.b.c;path=/", "a.b.c", "/", MaskMode::Skip);
+            ("ws;host=a.b.c;path=/abc;mask=standard", "a.b.c", "/abc", MaskMode::Standard);
+            ("ws;path=/abc;host=a.b.c;mask=fixed", "a.b.c", "/abc", MaskMode::Fixed);
+            ("ws;path=/abc;host=a.b.c;", "a.b.c", "/abc", MaskMode::Skip);
         ];
     }
 

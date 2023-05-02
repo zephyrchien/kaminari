@@ -2,6 +2,8 @@ use std::io::Result;
 use std::future::Future;
 use std::fmt::{Display, Formatter};
 
+use crate::ws;
+
 use super::{IOStream, AsyncAccept, AsyncConnect};
 use super::nop::{NopAccept, NopConnect};
 use super::ws::{WsConf, WsAccept, WsConnect};
@@ -18,8 +20,12 @@ pub struct MixClientConf {
 pub enum MixConnect {
     Plain(NopConnect),
     Ws(WsConnect<NopConnect>),
+    WsFixed(WsConnect<NopConnect, ws::Fixed>),
+    WsStandard(WsConnect<NopConnect, ws::Standard>),
     Tls(TlsConnect<NopConnect>),
     Wss(WsConnect<TlsConnect<NopConnect>>),
+    WssFixed(WsConnect<TlsConnect<NopConnect>, ws::Fixed>),
+    WssStandard(WsConnect<TlsConnect<NopConnect>, ws::Standard>),
 }
 
 impl MixConnect {
@@ -28,9 +34,21 @@ impl MixConnect {
         let MixClientConf { ws, tls } = conf;
         match (ws, tls) {
             (None, None) => Plain(NopConnect {}),
-            (Some(ws), None) => Ws(WsConnect::new(NopConnect {}, ws)),
+            (Some(ws), None) => match ws.mask_mode {
+                ws::MaskMode::Skip => Ws(WsConnect::new(NopConnect {}, ws)),
+                ws::MaskMode::Fixed => WsFixed(WsConnect::new(NopConnect {}, ws)),
+                ws::MaskMode::Standard => WsStandard(WsConnect::new(NopConnect {}, ws)),
+            },
             (None, Some(tls)) => Tls(TlsConnect::new(NopConnect {}, tls)),
-            (Some(ws), Some(tls)) => Wss(WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws)),
+            (Some(ws), Some(tls)) => match ws.mask_mode {
+                ws::MaskMode::Skip => Wss(WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws)),
+                ws::MaskMode::Fixed => {
+                    WssFixed(WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws))
+                }
+                ws::MaskMode::Standard => {
+                    WssStandard(WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws))
+                }
+            },
         }
     }
 
@@ -39,12 +57,26 @@ impl MixConnect {
         let MixClientConf { ws, tls } = conf;
         match (ws, tls) {
             (None, None) => Plain(NopConnect {}),
-            (Some(ws), None) => Ws(WsConnect::new(NopConnect {}, ws)),
+            (Some(ws), None) => match ws.mask_mode {
+                ws::MaskMode::Skip => Ws(WsConnect::new(NopConnect {}, ws)),
+                ws::MaskMode::Fixed => WsFixed(WsConnect::new(NopConnect {}, ws)),
+                ws::MaskMode::Standard => WsStandard(WsConnect::new(NopConnect {}, ws)),
+            },
             (None, Some(tls)) => Tls(TlsConnect::new_shared(NopConnect {}, tls)),
-            (Some(ws), Some(tls)) => Wss(WsConnect::new(
-                TlsConnect::new_shared(NopConnect {}, tls),
-                ws,
-            )),
+            (Some(ws), Some(tls)) => match ws.mask_mode {
+                ws::MaskMode::Skip => Wss(WsConnect::new(
+                    TlsConnect::new_shared(NopConnect {}, tls),
+                    ws,
+                )),
+                ws::MaskMode::Fixed => WssFixed(WsConnect::new(
+                    TlsConnect::new_shared(NopConnect {}, tls),
+                    ws,
+                )),
+                ws::MaskMode::Standard => WssStandard(WsConnect::new(
+                    TlsConnect::new_shared(NopConnect {}, tls),
+                    ws,
+                )),
+            },
         }
     }
 }
@@ -62,8 +94,12 @@ impl<S: IOStream> AsyncConnect<S> for MixConnect {
             match self {
                 Plain(cc) => cc.connect(stream, buf).await.map(MixS::Plain),
                 Ws(cc) => cc.connect(stream, buf).await.map(MixS::Ws),
+                WsFixed(cc) => cc.connect(stream, buf).await.map(MixS::WsFixed),
+                WsStandard(cc) => cc.connect(stream, buf).await.map(MixS::WsStandard),
                 Tls(cc) => cc.connect(stream, buf).await.map(MixS::Tls),
                 Wss(cc) => cc.connect(stream, buf).await.map(MixS::Wss),
+                WssFixed(cc) => cc.connect(stream, buf).await.map(MixS::WssFixed),
+                WssStandard(cc) => cc.connect(stream, buf).await.map(MixS::WssStandard),
             }
         }
     }
@@ -138,15 +174,19 @@ mod stream {
     use std::pin::Pin;
     use std::task::{Poll, Context};
     use tokio::io::{ReadBuf, AsyncRead, AsyncWrite};
-    use crate::ws::{WsClientStream, WsServerStream};
+    use crate::ws::{WsClientStream, WsServerStream, WsStandardClientStream, WsFixedClientStream};
     use crate::tls::{TlsClientStream, TlsServerStream};
 
     #[derive(Debug)]
     pub enum MixClientStream<T> {
         Plain(T),
         Ws(WsClientStream<T>),
+        WsFixed(WsFixedClientStream<T>),
+        WsStandard(WsStandardClientStream<T>),
         Tls(TlsClientStream<T>),
         Wss(WsClientStream<TlsClientStream<T>>),
+        WssFixed(WsFixedClientStream<TlsClientStream<T>>),
+        WssStandard(WsStandardClientStream<TlsClientStream<T>>),
     }
 
     #[derive(Debug)]
@@ -174,7 +214,7 @@ mod stream {
         };
     }
 
-    macro_rules! impl_async_read {
+    macro_rules! impl_async_read_server {
         ($stream: ident) => {
             impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for $stream<T> {
                 fn poll_read(
@@ -189,7 +229,7 @@ mod stream {
         };
     }
 
-    macro_rules! impl_async_write {
+    macro_rules! impl_async_write_server {
         ($stream: ident) => {
             impl<T: AsyncRead + AsyncWrite + Unpin> AsyncWrite for $stream<T> {
                 fn poll_write(
@@ -214,10 +254,96 @@ mod stream {
         };
     }
 
-    impl_async_read!(MixClientStream);
-    impl_async_write!(MixClientStream);
-    impl_async_read!(MixServerStream);
-    impl_async_write!(MixServerStream);
+    macro_rules! impl_async_read_client {
+        ($stream: ident) => {
+            impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for $stream<T> {
+                fn poll_read(
+                    self: Pin<&mut Self>,
+                    cx: &mut Context<'_>,
+                    buf: &mut ReadBuf<'_>,
+                ) -> Poll<Result<()>> {
+                    use $stream::*;
+                    call_each!(
+                        self || Plain,
+                        Ws,
+                        WsFixed,
+                        WsStandard,
+                        Tls,
+                        Wss,
+                        WssFixed,
+                        WssStandard,
+                        || poll_read,
+                        cx,
+                        buf
+                    )
+                }
+            }
+        };
+    }
+
+    macro_rules! impl_async_write_client {
+        ($stream: ident) => {
+            impl<T: AsyncRead + AsyncWrite + Unpin> AsyncWrite for $stream<T> {
+                fn poll_write(
+                    self: Pin<&mut Self>,
+                    cx: &mut Context<'_>,
+                    buf: &[u8],
+                ) -> Poll<Result<usize>> {
+                    use $stream::*;
+                    call_each!(
+                        self || Plain,
+                        Ws,
+                        WsFixed,
+                        WsStandard,
+                        Tls,
+                        Wss,
+                        WssFixed,
+                        WssStandard,
+                        || poll_write,
+                        cx,
+                        buf
+                    )
+                }
+
+                fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
+                    use $stream::*;
+                    call_each!(
+                        self || Plain,
+                        Ws,
+                        WsFixed,
+                        WsStandard,
+                        Tls,
+                        Wss,
+                        WssFixed,
+                        WssStandard,
+                        || poll_flush,
+                        cx
+                    )
+                }
+
+                fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<()>> {
+                    use $stream::*;
+                    call_each!(
+                        self || Plain,
+                        Ws,
+                        WsFixed,
+                        WsStandard,
+                        Tls,
+                        Wss,
+                        WssFixed,
+                        WssStandard,
+                        || poll_shutdown,
+                        cx
+                    )
+                }
+            }
+        };
+    }
+
+    impl_async_read_client!(MixClientStream);
+    impl_async_write_client!(MixClientStream);
+    impl_async_read_server!(MixServerStream);
+    impl_async_write_server!(MixServerStream);
 }
 
 // ========== type cast ==========
@@ -272,7 +398,16 @@ macro_rules! impl_display {
     };
 }
 
-impl_display!(MixConnect || Plain, Ws, Tls, Wss,);
+impl_display!(
+    MixConnect || Plain,
+    Ws,
+    WsFixed,
+    WsStandard,
+    Tls,
+    Wss,
+    WssFixed,
+    WssStandard,
+);
 impl_display!(MixAccept || Plain, Ws, Tls, Wss,);
 
 #[cfg(test)]
@@ -285,6 +420,7 @@ mod test {
             ws: Some(WsConf {
                 host: String::from("abc"),
                 path: String::from("chat"),
+                mask_mode: ws::MaskMode::Skip,
             }),
             tls: Some(TlsClientConf {
                 sni: String::from("abc"),
@@ -299,7 +435,7 @@ mod test {
 
         let conn = MixConnect::new(conf);
 
-        println!("{}", conn);
+        println!("{conn}");
     }
 
     #[test]
@@ -308,6 +444,7 @@ mod test {
             ws: Some(WsConf {
                 host: String::from("abc"),
                 path: String::from("chat"),
+                mask_mode: ws::MaskMode::Skip,
             }),
             tls: Some(TlsServerConf {
                 crt: String::new(),
@@ -322,6 +459,6 @@ mod test {
 
         let lis = MixAccept::new(conf);
 
-        println!("{}", lis);
+        println!("{lis}");
     }
 }

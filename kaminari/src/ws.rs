@@ -16,14 +16,60 @@ pub type WsStandardClientStream<T> = WsStream<T, StandardClient>;
 pub type WsFixedClientStream<T> = WsStream<T, FixedMaskClient>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MaskMode {
+    Skip,
+    Fixed,
+    Standard,
+}
+
+impl From<Option<&str>> for MaskMode {
+    fn from(item: Option<&str>) -> Self {
+        match item {
+            Some(item) => match item {
+                "skip" => Self::Skip,
+                "fixed" => Self::Fixed,
+                "standard" => Self::Standard,
+                _ => panic!("{item} mask mode is not supported."),
+            },
+            None => Self::Skip,
+        }
+    }
+}
+
+impl Display for MaskMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Skip => "skip",
+                Self::Fixed => "fixed",
+                Self::Standard => "standard",
+            }
+        )
+    }
+}
+
+impl Default for MaskMode {
+    fn default() -> Self {
+        Self::Skip
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WsConf {
     pub host: String,
     pub path: String,
+    pub mask_mode: MaskMode,
 }
 
 impl Display for WsConf {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "host: {}, path: {}", self.host, self.path)
+        write!(
+            f,
+            "host: {}, path: {}, mask: {}",
+            self.host, self.path, self.mask_mode
+        )
     }
 }
 
@@ -64,33 +110,17 @@ impl<T, M> Display for WsConnect<T, M>
 where
     T: Display,
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[ws]{}", self.conn) }
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[ws]{}", self.conn)
+    }
 }
 
-impl<T> WsConnect<T> {
+impl<T, M: Mode> WsConnect<T, M> {
     #[inline]
     pub const fn new(conn: T, conf: WsConf) -> Self {
         Self {
             conn,
             conf,
-            _marker: PhantomData,
-        }
-    }
-
-    #[inline]
-    pub fn standard(self) -> WsConnect<T, Standard> {
-        WsConnect {
-            conn: self.conn,
-            conf: self.conf,
-            _marker: PhantomData,
-        }
-    }
-
-    #[inline]
-    pub fn fixed(self) -> WsConnect<T, Fixed> {
-        WsConnect {
-            conn: self.conn,
-            conf: self.conf,
             _marker: PhantomData,
         }
     }
@@ -133,12 +163,16 @@ impl<T> Display for WsAccept<T>
 where
     T: Display,
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result { write!(f, "[ws]{}", self.lis) }
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[ws]{}", self.lis)
+    }
 }
 
 impl<T> WsAccept<T> {
     #[inline]
-    pub const fn new(lis: T, conf: WsConf) -> Self { Self { lis, conf } }
+    pub const fn new(lis: T, conf: WsConf) -> Self {
+        Self { lis, conf }
+    }
 }
 
 impl<S, T> AsyncAccept<S> for WsAccept<T>

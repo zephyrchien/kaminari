@@ -2,6 +2,8 @@ use std::env;
 use std::net::{SocketAddr, ToSocketAddrs};
 use anyhow::Result;
 
+pub const UDP_MAX_BUF_LENGTH: usize = 0xffff;
+
 pub struct Endpoint {
     pub local: SocketAddr,
     pub remote: SocketAddr,
@@ -14,12 +16,12 @@ pub fn parse_env() -> Result<(Endpoint, String)> {
     let remote_port = env::var("SS_REMOTE_PORT")?;
     let plugin_opts = env::var("SS_PLUGIN_OPTIONS")?;
 
-    let local = format!("{}:{}", local_host, local_port)
+    let local = format!("{local_host}:{local_port}")
         .to_socket_addrs()?
         .next()
         .unwrap();
 
-    let remote = format!("{}:{}", remote_host, remote_port)
+    let remote = format!("{remote_host}:{remote_port}")
         .to_socket_addrs()?
         .next()
         .unwrap();

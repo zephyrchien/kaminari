@@ -5,18 +5,18 @@
 [![downloads](https://img.shields.io/github/downloads/zephyrchien/kaminari/total?color=green)](https://github.com/zephyrchien/kaminari/releases)
 [![telegram](https://img.shields.io/badge/-telegram-blue?style=flat&color=grey&logo=telegram)](https://t.me/+zKbZTvQE2XtiYmIx)
 
-Blazing-fast websocket tunnel built on top of [lightws](https://github.com/zephyrchien/lightws).
+A blazing fast TCP, TLS and WebSocket tunnel.
 
 ## Intro
 
-- Client side receives tcp then sends [tcp/ws/tls/wss].
+- Client side listens on tcp or udp and sends traffics through [tcp/ws/tls/wss] to server side.
 
-- Server side receives [tcp/ws/tls/wss] then sends tcp.
+- Server side receives the traffics then sends them to desginated remote through tcp or udp .
 
 - Compatible with shadowsocks [SIP003 plugin](https://shadowsocks.org/guide/sip003.html).
 
 ```text
- tcp                           ws/tls/wss                           tcp
+ tcp/udp                     ws/tls/wss/tcp                     tcp/udp
  ===                          ============                          ===
         +-------------------+              +-------------------+
         |                   |              |                   |
@@ -24,7 +24,7 @@ Blazing-fast websocket tunnel built on top of [lightws](https://github.com/zephy
         |     kaminaric     |              |     kaminaris     |
 <-------+                   <--------------+                   <-------+
         |                   |              |                   |
-        +-------------------+              +-------------------+       
+        +-------------------+              +-------------------+
 ```
 
 ## Usage
@@ -57,9 +57,9 @@ use `ws` to enable websocket.
 
 Client or server side options:
 
-- `host=<host>`* : set http host.
+- `host=<host>`\* : set http host.
 
-- `path=<path>`* : set http path.
+- `path=<path>`\* : set http path.
 
 Client side extra options:
 
@@ -79,7 +79,7 @@ use `tls` to enable tls.
 
 Client side options:
 
-- `sni=<sni>`* : set sni.
+- `sni=<sni>`\* : set sni.
 
 - `alpn=<alpn>`: set alpn. e.g.: `h2,http/1.1`.
 
@@ -91,11 +91,11 @@ Server side options:
 
 Requires either `cert+key` or `servername`.
 
-- `key=<path/to/key>`* : private key path.
+- `key=<path/to/key>`\* : private key path.
 
-- `cert=<path/to/cert>`* : certificate path.
+- `cert=<path/to/cert>`\* : certificate path.
 
-- `servername=<name>`* : generate self signed cert/key, use $name as CN.
+- `servername=<name>`\* : generate self signed cert/key, use $name as CN.
 
 - `ocsp=<path/to/ocsp>`: der-encoded OCSP response.
 
@@ -112,6 +112,10 @@ openssl ocsp -issuer <path/to/ca> \
     -header Host=r3.o.lencr.org \
     -respout <path/to/ocsp> -noverify -no_nonce
 ```
+
+#### UDP Over TCP Options
+
+use `uot` to enable udp over tcp feature.
 
 ### Examples
 
@@ -147,6 +151,26 @@ kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;cert
 kaminaris 127.0.0.1:20000 127.0.0.1:30000 'ws;host=example.com;path=/ws;tls;servername=example.com'
 ```
 
+udp ⇋ tcp --- tcp ⇋ udp:
+
+```shell
+kaminaric 127.0.0.1:10000 127.0.0.1:20000 'uot'
+
+kaminaris 127.0.0.1:20000 127.0.0.1:30000 'uot'
+```
+
+udp ⇋ tls --- tls ⇋ udp:
+
+```shell
+kaminaric 127.0.0.1:10000 127.0.0.1:20000 'uot;tls;sni=example.com'
+
+# use cert + key
+kaminaris 127.0.0.1:20000 127.0.0.1:30000 'uot;tls;cert=example.com.crt;key=example.com.key'
+
+# or generate self signed cert/key
+kaminaris 127.0.0.1:20000 127.0.0.1:30000 'uot;tls;servername=example.com'
+```
+
 shadowsocks plugin:
 
 ```shell
@@ -161,7 +185,7 @@ sslocal -b "127.0.0.1:1080" -s "example.com:8080" -m "aes-128-gcm" -k "123456" \
     --plugin-opts "ws;host=example.com;path=/chat"
 ```
 
-*To use `v2ray-plugin` on client side, add `mux=0` to disable multiplex, so that it sends standard websocket stream which can be handled by `kaminari` or any other middlewares.
+\*To use `v2ray-plugin` on client side, add `mux=0` to disable multiplex, so that it sends standard websocket stream which can be handled by `kaminari` or any other middlewares.
 
 ```shell
 sslocal -b "127.0.0.1:1080" -s "example.com:8080" -m "aes-128-gcm" -k "123456" \
