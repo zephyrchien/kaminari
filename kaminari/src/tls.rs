@@ -298,11 +298,11 @@ mod utils {
 
         pub fn firefox_roots() -> RootCertStore {
             let mut roots = RootCertStore::empty();
-            roots.add_server_trust_anchors(TLS_SERVER_ROOTS.0.iter().map(|x| {
+            roots.add_trust_anchors(TLS_SERVER_ROOTS.iter().map(|x| {
                 OwnedTrustAnchor::from_subject_spki_name_constraints(
-                    x.subject,
-                    x.spki,
-                    x.name_constraints,
+                    x.subject(),
+                    x.subject_public_key_info.into(),
+                    x.name_constraints.into(),
                 )
             }));
             roots
@@ -373,7 +373,7 @@ mod utils {
             // pem
             while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
                 if let Item::X509Certificate(cert) = item {
-                    certs.push(Certificate(cert));
+                    certs.push(Certificate(cert.to_vec()));
                 }
             }
 
@@ -391,9 +391,12 @@ mod utils {
 
             // pem
             while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
-                if let Item::RSAKey(key) | Item::PKCS8Key(key) | Item::ECKey(key) = item {
-                    priv_key = Some(key);
-                }
+                priv_key = Some(match item {
+                    Item::Pkcs1Key(k) => k.secret_pkcs1_der().to_vec(),
+                    Item::Pkcs8Key(k) => k.secret_pkcs8_der().to_vec(),
+                    Item::Sec1Key(k) => k.secret_sec1_der().to_vec(),
+                    _ => continue,
+                })
             }
 
             // der
