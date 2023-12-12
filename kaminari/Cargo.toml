@@ -10,7 +10,7 @@ description = "The ever fast websocket tunnel built on top of lightws."
 license = "MIT"
 
 [features]
-default = []
+default = ["all"]
 all = ["ws", "uot", "tls", "mix"]
 mix = ["ws", "tls"]
 ws = ["lightws"]
@@ -32,8 +32,7 @@ lightws = { version = "0.6", features = ["unsafe_auto_mask_write"], optional = t
 udpflow = { version = "0.1.0", optional = true }
 
 # tls
-rustls = { version = "0.22" }
-tokio-rustls = { version = "0.24", features = ["early-data", "dangerous_configuration"], optional = true }
+tokio-rustls = { version = "0.25", features = ["early-data"], optional = true }
 webpki-roots = { version = "0.26", optional = true }
 rustls-pemfile = { version = "2", optional = true }
 rcgen = {version = "0.11", optional = true }
