@@ -1,5 +1,6 @@
 [workspace]
 members = ["kaminari", "cmd"]
+resolver = "2"
 
 [profile.release]
 opt-level = 3

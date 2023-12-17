@@ -9,109 +9,69 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-20.04]
+        cross: [true]
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-20.04
-            cross: false
-            file-ext: ""
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
+          - target: x86_64-pc-windows-gnu
+          - target: x86_64-linux-android
+          - target: aarch64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-musl
+          - target: aarch64-linux-android
+          - target: armv7-unknown-linux-gnueabi
+          - target: armv7-unknown-linux-gnueabihf
+          - target: armv7-unknown-linux-musleabi
+          - target: armv7-unknown-linux-musleabihf
+          - target: armv7-linux-androideabi
+          - target: arm-unknown-linux-gnueabi
+          - target: arm-unknown-linux-gnueabihf
+          - target: arm-unknown-linux-musleabi
+          - target: arm-unknown-linux-musleabihf
+          - target: armv7-linux-androideabi
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: false
-            file-ext: .exe
-          - target: x86_64-pc-windows-gnu
-            os: ubuntu-20.04
-            cross: true
-            file-ext: .exe
           - target: x86_64-apple-darwin
             os: macos-latest
             cross: false
-            file-ext: ""
-          - target: x86_64-linux-android
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: aarch64-unknown-linux-musl
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
           - target: aarch64-apple-darwin
             os: macos-latest
-            cross: true
-            file-ext: ""
-          - target: aarch64-linux-android
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
+            cross: false
           - target: aarch64-apple-ios
             os: macos-latest
-            cross: true
-            file-ext: ""
-          - target: armv7-unknown-linux-gnueabi
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: armv7-unknown-linux-gnueabihf
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: armv7-unknown-linux-musleabi
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: armv7-unknown-linux-musleabihf
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: arm-unknown-linux-gnueabi
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: arm-unknown-linux-gnueabihf
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: arm-unknown-linux-musleabi
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: arm-unknown-linux-musleabihf
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
-          - target: armv7-linux-androideabi
-            os: ubuntu-20.04
-            cross: true
-            file-ext: ""
+            cross: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly
-          target: ${{ matrix.target }}
-          override: true
-      - name: build
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: ${{ matrix.cross }}
-          command: build
-          args: --release -p kaminari-cmd --target=${{ matrix.target }}
-      - name: pack
+            toolchain: nightly
+            targets: ${{ matrix.target }}
+      - name: install cross
+        if: ${{ matrix.cross }}
+        run: cargo install cross --git https://github.com/cross-rs/cross
+      - name: build cross
+        if: ${{ matrix.cross }}
+        run: cross build --release -p kaminari-cmd --target=${{ matrix.target }}
+      - name: build native
+        if: ${{ !matrix.cross }}
+        run: cargo build --release -p kaminari-cmd --target=${{ matrix.target }}
+      - name: pack unix
+        if: "!contains(matrix.target, 'windows')"
         run: |
-          mkdir -p release-${{ matrix.target }}
-          cd release-${{ matrix.target }}
-          tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris${{ matrix.file-ext }} kaminaric${{ matrix.file-ext }}
+          mkdir -p build-${{ matrix.target }}
+          cd build-${{ matrix.target }}
+          tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris kaminaric
           openssl dgst -sha256 -r kaminari-${{ matrix.target }}.tar.gz > kaminari-${{ matrix.target }}.sha256
-
+      - name: pack windows
+        if: "contains(matrix.target, 'windows')"
+        run: |
+          mkdir -p build-${{ matrix.target }}
+          cd build-${{ matrix.target }}
+          tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris.exe kaminaric.exe
+          openssl dgst -sha256 -r kaminari-${{ matrix.target }}.tar.gz > kaminari-${{ matrix.target }}.sha256
       - name: release
         uses: softprops/action-gh-release@v1
         with:
