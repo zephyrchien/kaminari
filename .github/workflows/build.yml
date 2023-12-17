@@ -12,26 +12,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - x86_64-pc-windows-gnu
+          - x86_64-linux-android
+          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - aarch64-linux-android
+          - armv7-unknown-linux-gnueabi
+          - armv7-unknown-linux-gnueabihf
+          - armv7-unknown-linux-musleabi
+          - armv7-unknown-linux-musleabihf
+          - armv7-linux-androideabi
+          - arm-unknown-linux-gnueabi
+          - arm-unknown-linux-gnueabihf
+          - arm-unknown-linux-musleabi
+          - arm-unknown-linux-musleabihf
+          - armv7-linux-androideabi
         os: [ubuntu-20.04]
         cross: [true]
         include:
-          - target: x86_64-unknown-linux-gnu
-          - target: x86_64-unknown-linux-musl
-          - target: x86_64-pc-windows-gnu
-          - target: x86_64-linux-android
-          - target: aarch64-unknown-linux-gnu
-          - target: aarch64-unknown-linux-musl
-          - target: aarch64-linux-android
-          - target: armv7-unknown-linux-gnueabi
-          - target: armv7-unknown-linux-gnueabihf
-          - target: armv7-unknown-linux-musleabi
-          - target: armv7-unknown-linux-musleabihf
-          - target: armv7-linux-androideabi
-          - target: arm-unknown-linux-gnueabi
-          - target: arm-unknown-linux-gnueabihf
-          - target: arm-unknown-linux-musleabi
-          - target: arm-unknown-linux-musleabihf
-          - target: armv7-linux-androideabi
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: false
