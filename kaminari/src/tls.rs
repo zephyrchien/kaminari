@@ -244,7 +244,7 @@ impl<T> TlsAccept<T> {
         };
 
         let cert_resolver = if !crt.is_empty() && !key.is_empty() {
-            utils::new_crt_key_resolver(crt, key, ocsp, None)
+            utils::new_crt_key_resolver(crt, key, ocsp)
         } else if !server_name.is_empty() {
             utils::new_self_signed_resolver(server_name)
         } else {
@@ -467,7 +467,6 @@ mod utils {
             cert: Vec<CertificateDer<'static>>,
             priv_key: &PrivateKeyDer,
             ocsp: Option<Vec<u8>>,
-            scts: Option<Vec<u8>>,
         ) -> Arc<AlwaysResolvesChain> {
             // this is for ring
             use rustls::crypto::ring as crypto;
@@ -495,7 +494,7 @@ mod utils {
 
             // generate a new cert
             let (cert, key) = generate_self_signed(&server_name);
-            let resolver = new_resolver(cert, &key, None, None);
+            let resolver = new_resolver(cert, &key, None);
 
             store.push((server_name, resolver.clone()));
             store.shrink_to_fit();
@@ -507,7 +506,6 @@ mod utils {
             crt: String,
             key: String,
             ocsp: Option<Vec<u8>>,
-            scts: Option<Vec<u8>>,
         ) -> Arc<AlwaysResolvesChain> {
             type Store = Mutex<Vec<(String, Arc<AlwaysResolvesChain>)>>;
             lazy_static! {
@@ -526,7 +524,7 @@ mod utils {
             // read cert and key
             let cert = read_certificates(&crt).expect("failed to read certificate");
             let priv_key = read_private_key(&key).expect("failed to read private key");
-            let resolver = new_resolver(cert, &priv_key, ocsp, scts);
+            let resolver = new_resolver(cert, &priv_key, ocsp);
 
             store.push((key, resolver.clone()));
             store.shrink_to_fit();
