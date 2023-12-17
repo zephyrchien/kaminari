@@ -82,7 +82,7 @@ impl<T> TlsConnect<T> {
             insecure,
             early_data,
         } = conf;
-        let sni: ServerName = sni.as_str().try_into().expect("invalid DNS name");
+        let sni = ServerName::try_from(sni).expect("invalid DNS name");
 
         let mut conf = if !insecure {
             ClientConfig::builder()
@@ -114,7 +114,7 @@ impl<T> TlsConnect<T> {
             early_data,
         } = conf;
 
-        let sni: ServerName = sni.as_str().try_into().expect("invalid DNS name");
+        let sni = ServerName::try_from(sni).expect("invalid DNS name");
 
         let mut conf = ClientConfig::builder()
             .dangerous()
@@ -290,7 +290,7 @@ mod utils {
 
         use tokio_rustls::rustls::{self, pki_types};
         use pki_types::{CertificateDer, PrivateKeyDer, ServerName};
-        use rustls::{RootCertStore, DigitallySignedStruct};
+        use rustls::{RootCertStore, DigitallySignedStruct, SignatureScheme};
         use rustls::client::WebPkiServerVerifier;
         use rustls::client::danger::{ServerCertVerified, ServerCertVerifier, HandshakeSignatureValid};
 
@@ -317,24 +317,38 @@ mod utils {
 
             fn verify_tls12_signature(
                 &self,
-                message: &[u8],
-                cert: &CertificateDer<'_>,
-                dss: &DigitallySignedStruct,
+                _message: &[u8],
+                _cert: &CertificateDer<'_>,
+                _dss: &DigitallySignedStruct,
             ) -> Result<HandshakeSignatureValid, rustls::Error> {
-                WebPkiServerVerifier::default_verify_tls12_signature(message, cert, dss)
+                Ok(HandshakeSignatureValid::assertion())
             }
 
             fn verify_tls13_signature(
                 &self,
-                message: &[u8],
-                cert: &CertificateDer<'_>,
-                dss: &DigitallySignedStruct,
+                _message: &[u8],
+                _cert: &CertificateDer<'_>,
+                _dss: &DigitallySignedStruct,
             ) -> Result<HandshakeSignatureValid, rustls::Error> {
-                WebPkiServerVerifier::default_verify_tls13_signature(message, cert, dss)
+                Ok(HandshakeSignatureValid::assertion())
             }
 
             fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
-                WebPkiServerVerifier::default_supported_verify_schemes()
+                vec![
+                    SignatureScheme::RSA_PKCS1_SHA1,
+                    SignatureScheme::ECDSA_SHA1_Legacy,
+                    SignatureScheme::RSA_PKCS1_SHA256,
+                    SignatureScheme::ECDSA_NISTP256_SHA256,
+                    SignatureScheme::RSA_PKCS1_SHA384,
+                    SignatureScheme::ECDSA_NISTP384_SHA384,
+                    SignatureScheme::RSA_PKCS1_SHA512,
+                    SignatureScheme::ECDSA_NISTP521_SHA512,
+                    SignatureScheme::RSA_PSS_SHA256,
+                    SignatureScheme::RSA_PSS_SHA384,
+                    SignatureScheme::RSA_PSS_SHA512,
+                    SignatureScheme::ED25519,
+                    SignatureScheme::ED448,
+                ]
             }
         }
 
@@ -347,10 +361,12 @@ mod utils {
 
         fn new_firefox_verifier() -> Arc<WebPkiServerVerifier> {
             lazy_static! {
-                static ref ARC: Arc<WebPkiServerVerifier> = Arc::new({
+                static ref ARC: Arc<WebPkiServerVerifier> = {
                     let ff = Arc::new(firefox_roots());
-                    WebPkiServerVerifier::builder(ff).build().unwrap()
-                });
+                    WebPkiServerVerifier::builder(Arc::new(firefox_roots()))
+                        .build()
+                        .unwrap()
+                };
             }
             ARC.clone()
         }
@@ -370,7 +386,7 @@ mod utils {
         use std::sync::{Arc, Mutex};
 
         use tokio_rustls::rustls::{self, pki_types};
-        use pki_types::{CertificateDer, PrivateKeyDer};
+        use pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer as Der};
         use rustls::sign;
         use rustls::server::ResolvesServerCert;
         use rustls::server::ClientHello;
@@ -380,8 +396,7 @@ mod utils {
 
         use lazy_static::lazy_static;
 
-        // copy & paste from https://github.com/EAimTY/tuic/blob/master/server/src/certificate.rs
-        pub fn read_certificates(path: &str) -> Result<Vec<CertificateDer>> {
+        pub fn read_certificates(path: &str) -> Result<Vec<CertificateDer<'static>>> {
             let mut file = BufReader::new(File::open(path)?);
             let mut certs = Vec::new();
 
@@ -400,34 +415,34 @@ mod utils {
             Ok(certs)
         }
 
-        pub fn read_private_key(path: &str) -> Result<PrivateKeyDer> {
+        pub fn read_private_key(path: &str) -> Result<PrivateKeyDer<'static>> {
             let mut file = BufReader::new(File::open(path)?);
             let mut priv_key = None;
 
             // pem
             while let Ok(Some(item)) = rustls_pemfile::read_one(&mut file) {
                 priv_key = Some(match item {
-                    Item::Pkcs1Key(k) => k.secret_pkcs1_der().to_vec(),
-                    Item::Pkcs8Key(k) => k.secret_pkcs8_der().to_vec(),
-                    Item::Sec1Key(k) => k.secret_sec1_der().to_vec(),
+                    Item::Pkcs1Key(k) => k.into(),
+                    Item::Pkcs8Key(k) => k.into(),
+                    Item::Sec1Key(k) => k.into(),
                     _ => continue,
-                })
+                });
+                break;
             }
 
             // der
-            priv_key
-                .map(Ok)
-                .unwrap_or_else(|| fs::read(path))
-                .map(PrivateKeyDer::from)
+            priv_key.map_or_else(|| fs::read(path).map(|x| Der::from(x).into()), Ok)
         }
 
         pub fn read_ocsp(path: &str) -> Result<Vec<u8>> { fs::read(path) }
 
-        pub fn generate_self_signed(server_name: &str) -> (Vec<CertificateDer>, PrivateKeyDer) {
+        pub fn generate_self_signed(
+            server_name: &str,
+        ) -> (Vec<CertificateDer<'static>>, PrivateKeyDer<'static>) {
             let self_signed = rcgen::generate_simple_self_signed(vec![server_name.to_string()])
                 .expect("failed to generate self signed certificate and private key");
 
-            let key = PrivateKeyDer::from(self_signed.serialize_private_key_der());
+            let key = Der::from(self_signed.serialize_private_key_der()).into();
 
             let cert = self_signed
                 .serialize_der()
@@ -449,14 +464,16 @@ mod utils {
         }
 
         pub fn new_resolver(
-            chain: Vec<CertificateDer>,
+            cert: Vec<CertificateDer<'static>>,
             priv_key: &PrivateKeyDer,
             ocsp: Option<Vec<u8>>,
             scts: Option<Vec<u8>>,
         ) -> Arc<AlwaysResolvesChain> {
-            let key = sign::any_supported_type(priv_key).expect("invalid key");
+            // this is for ring
+            use rustls::crypto::ring as crypto;
+            let key = crypto::sign::any_supported_type(priv_key).expect("invalid key");
             Arc::new(AlwaysResolvesChain(Arc::new(sign::CertifiedKey {
-                cert: chain,
+                cert,
                 key,
                 ocsp,
             })))
