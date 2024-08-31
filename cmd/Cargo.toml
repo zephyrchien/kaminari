@@ -11,9 +11,9 @@ license = "GPL-3.0"
 [dependencies]
 anyhow = "1"
 realm_io = "0.5.1"
-realm_syscall = "0.1.6"
+realm_syscall = "0.1.8"
 kaminari = { version = "0.12", features = ["ws"] }
-tokio = { version = "1.9", features = ["rt", "net", "macros"] }
+tokio = { version = "1.40", features = ["rt", "net", "macros"] }
 
 [[bin]]
 name = "kaminaric"
