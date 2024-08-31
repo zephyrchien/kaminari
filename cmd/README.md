@@ -168,3 +168,35 @@ sslocal -b "127.0.0.1:1080" -s "example.com:8080" -m "aes-128-gcm" -k "123456" \
     --plugin "path/to/v2ray-plugin" \
     --plugin-opts "mux=0;host=example.com;path=/chat"
 ```
+
+Minimal working sample:
+
+```rust
+use std::error::Error;
+
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
+
+use kaminari::nop::NopConnect;
+use kaminari::tls::TlsConnect;
+use kaminari::AsyncConnect;
+use kaminari::{opt, ws};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    info!("starting...");
+    let ws_conf = opt::get_ws_conf("ws;host=my-wss-server.xyz;path=/").unwrap();
+    let tls = opt::get_tls_client_conf("tls;sni=my-wss-server.xyz;alpn=h2,http/1.1").unwrap();
+    let client = ws::WsConnect::new(TlsConnect::new(NopConnect {}, tls), ws_conf);
+
+    let stream = TcpStream::connect("my-wss-server.xyz").await?;
+    info!("Connected");
+    let mut buf = vec![0u8; 0x1000];
+    let mut ws_stream = client.connect(stream, &mut buf).await?;
+    ws_stream.write(&buf).await?;
+    ws_stream.read(&mut buf).await?;
+
+    Ok(())
+}
+
+```
