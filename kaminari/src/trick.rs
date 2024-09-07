@@ -2,7 +2,7 @@ use core::ops::Deref;
 use std::io::Result;
 use std::future::Future;
 
-use super::{IOStream, AsyncAccept, AsyncConnect};
+use super::{IOStream, AsyncConnect};
 
 // Safety:
 // pointer is not null once inited(comes from an immutable ref)
@@ -52,23 +52,6 @@ where
     fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         async move {
             let stream = self.as_ref().connect(stream, buf).await?;
-            Ok(stream)
-        }
-    }
-}
-
-impl<S, T> AsyncAccept<S> for Ref<T>
-where
-    S: IOStream,
-    T: AsyncAccept<S>,
-{
-    type Stream = T::Stream;
-
-    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> +'a where Self:'a;
-
-    fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
-        async move {
-            let stream = self.as_ref().accept(stream, buf).await?;
             Ok(stream)
         }
     }

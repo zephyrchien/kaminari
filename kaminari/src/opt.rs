@@ -5,7 +5,7 @@
 use super::ws::WsConf;
 
 #[cfg(feature = "tls")]
-use super::tls::{TlsClientConf, TlsServerConf};
+use super::tls::TlsClientConf;
 
 #[macro_export]
 macro_rules! has_opt {
