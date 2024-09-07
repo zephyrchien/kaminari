@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.1.20240907"
+version = "0.1.202409071"
 edition = "2021"
 license = "MIT"
 
