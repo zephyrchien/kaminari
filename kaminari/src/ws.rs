@@ -3,7 +3,7 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::fmt::{Display, Formatter};
 
-use super::{IOStream, AsyncAccept, AsyncConnect};
+use super::{IOStream, AsyncConnect};
 
 use lightws::endpoint::Endpoint;
 use lightws::role::{Server, Client, StandardClient, FixedMaskClient, ClientRole};

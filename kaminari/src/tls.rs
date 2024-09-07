@@ -3,7 +3,7 @@ use std::future::Future;
 use std::sync::Arc;
 use std::fmt::{Debug, Display, Formatter};
 
-use super::{IOStream, AsyncAccept, AsyncConnect};
+use super::{IOStream, AsyncConnect};
 
 use tokio_rustls::rustls;
 use rustls::client::ClientConfig;
