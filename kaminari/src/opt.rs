@@ -86,31 +86,6 @@ pub fn get_tls_client_conf(s: &str) -> Option<TlsClientConf> {
     }
 }
 
-#[cfg(feature = "tls")]
-pub fn get_tls_server_conf(s: &str) -> Option<TlsServerConf> {
-    let it = s.split(';').map(|x| x.trim());
-
-    if !has_opt!(it.clone(), "tls") {
-        return None;
-    }
-
-    let crt = get_opt!(it.clone(), "cert");
-    let key = get_opt!(it.clone(), "key");
-    let ocsp = get_opt!(it.clone(), "ocsp");
-    let server_name = get_opt!(it.clone(), "servername");
-
-    if crt.is_some() && key.is_some() || server_name.is_some() {
-        Some(TlsServerConf {
-            crt: crt.map_or(String::new(), String::from),
-            key: key.map_or(String::new(), String::from),
-            ocsp: ocsp.map_or(String::new(), String::from),
-            server_name: server_name.map_or(String::new(), String::from),
-        })
-    } else {
-        panic!("tls: require cert and key or servername")
-    }
-}
-
 #[cfg(test)]
 #[cfg(any(feature = "ws", feature = "tls"))]
 mod test {
