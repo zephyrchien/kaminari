@@ -139,7 +139,10 @@ where
 {
     type Stream = TlsClientStream<T::Stream>;
 
-    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> +'a where Self:'a;
+    type ConnectFut<'a>
+        = impl Future<Output = Result<Self::Stream>> + 'a
+    where
+        Self: 'a;
 
     fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         async move {
@@ -269,7 +272,10 @@ where
 {
     type Stream = TlsServerStream<T::Stream>;
 
-    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> +'a where Self:'a;
+    type AcceptFut<'a>
+        = impl Future<Output = Result<Self::Stream>> + 'a
+    where
+        Self: 'a;
 
     fn accept<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::AcceptFut<'a> {
         async move {
@@ -439,15 +445,16 @@ mod utils {
         pub fn generate_self_signed(
             server_name: &str,
         ) -> (Vec<CertificateDer<'static>>, PrivateKeyDer<'static>) {
-            let self_signed = rcgen::generate_simple_self_signed(vec![server_name.to_string()])
+            use rcgen::{CertifiedKey, generate_simple_self_signed as make};
+
+            let CertifiedKey {
+                cert,
+                signing_key: key,
+            } = make(vec![server_name.to_string()])
                 .expect("failed to generate self signed certificate and private key");
 
-            let key = Der::from(self_signed.serialize_private_key_der()).into();
-
-            let cert = self_signed
-                .serialize_der()
-                .map(CertificateDer::from)
-                .expect("failed to serialize self signed certificate");
+            let key = Der::from(key.serialize_der()).into();
+            let cert = cert.der().to_owned();
 
             (vec![cert], key)
         }
