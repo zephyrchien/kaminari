@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.13.0"
+version = "0.13.1"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -16,7 +16,7 @@ mix = ["ws", "tls"]
 ws = ["lightws"]
 uot = ["udpflow"]
 tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen"]
-tls-ring = ["tokio-rustls/ring"]
+tls-ring = ["tls", "tokio-rustls/ring"]
 
 [dependencies]
 # async rt
