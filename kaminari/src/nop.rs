@@ -24,7 +24,10 @@ where
 {
     type Stream = S;
 
-    type ConnectFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
+    type ConnectFut<'a>
+        = impl Future<Output = Result<Self::Stream>>
+    where
+        Self: 'a;
 
     fn connect(&self, stream: S, _: &mut [u8]) -> Self::ConnectFut<'_> { async move { Ok(stream) } }
 }
@@ -35,7 +38,10 @@ where
 {
     type Stream = S;
 
-    type AcceptFut<'a> = impl Future<Output = Result<Self::Stream>> where Self:'a;
+    type AcceptFut<'a>
+        = impl Future<Output = Result<Self::Stream>>
+    where
+        Self: 'a;
 
     fn accept(&self, stream: S, _: &mut [u8]) -> Self::AcceptFut<'_> { async move { Ok(stream) } }
 }
