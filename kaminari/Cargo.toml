@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -16,7 +16,7 @@ mix = ["ws", "tls"]
 ws = ["lightws"]
 uot = ["udpflow"]
 tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen"]
-
+tls-ring = ["tokio-rustls/ring"]
 
 [dependencies]
 # async rt
@@ -32,7 +32,7 @@ lightws = { version = "0.6", features = ["unsafe_auto_mask_write"], optional = t
 udpflow = { version = "0.1.0", optional = true }
 
 # tls
-tokio-rustls = { version = "0.26", features = ["early-data", "ring"], optional = true }
+tokio-rustls = { version = "0.26", features = ["early-data"], optional = true }
 webpki-roots = { version = "1", optional = true }
 rustls-pemfile = { version = "2", optional = true }
 rcgen = { version = "0.14", optional = true }

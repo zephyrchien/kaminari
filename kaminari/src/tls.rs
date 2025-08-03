@@ -14,6 +14,22 @@ use tokio_rustls::{TlsAcceptor, TlsConnector};
 pub use tokio_rustls::client::TlsStream as TlsClientStream;
 pub use tokio_rustls::server::TlsStream as TlsServerStream;
 
+pub fn install_provider() {
+    #[cfg(feature = "tls-ring")]
+    {
+        rustls::crypto::ring::default_provider()
+            .install_default()
+            .expect("failed to install ring provider")
+    }
+
+    #[cfg(not(feature = "tls-ring"))]
+    {
+        rustls::crypto::aws_lc_rs::default_provider()
+            .install_default()
+            .expect("failed to install aws_lc_rs provider")
+    }
+}
+
 // ========== client ==========
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TlsClientConf {
@@ -476,7 +492,11 @@ mod utils {
             ocsp: Option<Vec<u8>>,
         ) -> Arc<AlwaysResolvesChain> {
             // this is for ring
+            #[cfg(feature = "tls-ring")]
             use rustls::crypto::ring as crypto;
+            #[cfg(not(feature = "tls-ring"))]
+            use rustls::crypto::aws_lc_rs as crypto;
+
             let key = crypto::sign::any_supported_type(priv_key).expect("invalid key");
             Arc::new(AlwaysResolvesChain(Arc::new(sign::CertifiedKey {
                 cert,
