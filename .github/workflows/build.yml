@@ -29,8 +29,7 @@ jobs:
           - arm-unknown-linux-gnueabihf
           - arm-unknown-linux-musleabi
           - arm-unknown-linux-musleabihf
-          - armv7-linux-androideabi
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
         cross: [true]
         include:
           - target: x86_64-pc-windows-msvc
@@ -53,6 +52,9 @@ jobs:
         with:
             toolchain: nightly
             targets: ${{ matrix.target }}
+      - name: export cflags
+        if: matrix.target == 'aarch64-apple-ios'
+        run: echo "IPHONEOS_DEPLOYMENT_TARGET=17.5" >> $GITHUB_ENV
       - name: install cross
         if: ${{ matrix.cross }}
         run: cargo install cross --git https://github.com/cross-rs/cross
@@ -75,7 +77,7 @@ jobs:
           cd build-${{ matrix.target }}
           tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris.exe kaminaric.exe
       - name: upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kaminari-${{ matrix.target }}.tar.gz
           path: build-${{ matrix.target }}/kaminari-${{ matrix.target }}.tar.gz

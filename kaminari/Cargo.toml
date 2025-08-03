@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.13.1"
+version = "0.13.2"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -15,7 +15,7 @@ all = ["ws", "uot", "tls", "mix"]
 mix = ["ws", "tls"]
 ws = ["lightws"]
 uot = ["udpflow"]
-tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen"]
+tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen", "aws-lc-rs"]
 tls-ring = ["tls", "tokio-rustls/ring"]
 
 [dependencies]
@@ -36,6 +36,7 @@ tokio-rustls = { version = "0.26", features = ["early-data"], optional = true }
 webpki-roots = { version = "1", optional = true }
 rustls-pemfile = { version = "2", optional = true }
 rcgen = { version = "0.14", optional = true }
+aws-lc-rs = { version = "1", features = ["bindgen"], optional = true } # this is for build
 
 [package.metadata.docs.rs]
 all-features = true

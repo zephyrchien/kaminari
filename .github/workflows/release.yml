@@ -26,8 +26,7 @@ jobs:
           - arm-unknown-linux-gnueabihf
           - arm-unknown-linux-musleabi
           - arm-unknown-linux-musleabihf
-          - armv7-linux-androideabi
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
         cross: [true]
         include:
           - target: x86_64-pc-windows-msvc
