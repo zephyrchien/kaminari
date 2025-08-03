@@ -57,7 +57,7 @@ impl<S: IOStream> AsyncConnect<S> for MixConnect {
     where
         Self: 'a;
 
-    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'_> {
+    fn connect<'a>(&'a self, stream: S, buf: &'a mut [u8]) -> Self::ConnectFut<'a> {
         use MixConnect::*;
         use stream::MixClientStream as MixS;
 
