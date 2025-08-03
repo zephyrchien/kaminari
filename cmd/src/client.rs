@@ -9,8 +9,8 @@ use kaminari::trick::Ref;
 use kaminari::AsyncConnect;
 use kaminari::nop::NopConnect;
 use kaminari::ws::WsConnect;
-#[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
-use kaminari::tls::TlsConnect;
+#[cfg(feature = "tls")]
+use kaminari::tls::{TlsConnect, install_provider};
 
 use kaminari_cmd::{Endpoint, parse_cmd, parse_env};
 
@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
     let (Endpoint { local, remote }, options) = parse_env().or_else(|_| parse_cmd())?;
 
     let ws = opt::get_ws_conf(&options);
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
+    #[cfg(feature = "tls")]
     let tls = opt::get_tls_client_conf(&options);
 
     eprintln!("listen: {}", &local);
@@ -29,9 +29,10 @@ async fn main() -> Result<()> {
         eprintln!("ws: {}", ws)
     }
 
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
+    #[cfg(feature = "tls")]
     if let Some(tls) = &tls {
         eprintln!("tls: {}", &tls);
+        install_provider();
     }
 
     let lis = TcpListener::bind(local).await?;
@@ -78,7 +79,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    #[cfg(any(feature = "tls-rustls", feature = "tls-openssl"))]
+    #[cfg(feature = "tls")]
     match (ws, tls) {
         (None, None) => {
             let client = NopConnect {};
@@ -98,7 +99,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    #[cfg(not(any(feature = "tls-rustls", feature = "tls-openssl")))]
+    #[cfg(not(feature = "tls"))]
     if let Some(ws) = ws {
         let client = WsConnect::new(NopConnect {}, ws);
         run_ws_each!(client);

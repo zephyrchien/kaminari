@@ -12,7 +12,7 @@ license = "GPL-3.0"
 anyhow = "1"
 realm_io = "0.5.1"
 realm_syscall = "0.1.6"
-kaminari = { version = "0.12", features = ["ws"] }
+kaminari = { version = "0.13", features = ["ws"] }
 tokio = { version = "1.9", features = ["rt", "net", "macros"] }
 
 [[bin]]
@@ -24,6 +24,7 @@ name = "kaminaris"
 path = "src/server.rs"
 
 [features]
-default = ["tls-rustls"]
-tls-rustls = ["kaminari/tls"]
+default = ["tls"]
+tls = ["kaminari/tls"]
+tls-ring = ["kaminari/tls-ring"]
 tls-openssl = []
