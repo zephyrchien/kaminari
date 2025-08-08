@@ -49,6 +49,9 @@ jobs:
         with:
             toolchain: nightly
             targets: ${{ matrix.target }}
+      - name: export cflags
+        if: matrix.target == 'aarch64-apple-ios'
+        run: echo "IPHONEOS_DEPLOYMENT_TARGET=17.5" >> $GITHUB_ENV
       - name: install cross
         if: ${{ matrix.cross }}
         run: cargo install cross --git https://github.com/cross-rs/cross
