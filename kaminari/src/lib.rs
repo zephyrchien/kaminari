@@ -39,3 +39,6 @@ pub mod uot;
 
 #[cfg(feature = "mix")]
 pub mod mix;
+
+#[cfg(feature = "tls")]
+pub use tls::install_provider as install_tls_provider;
