@@ -9,3 +9,7 @@ codegen-units = 1
 incremental = false
 panic = "abort"
 strip = true
+
+[profile.release-thin]
+inherits = "release"
+opt-level = "s"

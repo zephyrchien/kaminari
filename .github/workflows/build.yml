@@ -29,6 +29,14 @@ jobs:
           - arm-unknown-linux-gnueabihf
           - arm-unknown-linux-musleabi
           - arm-unknown-linux-musleabihf
+          - mips-unknown-linux-gnu
+          - mips-unknown-linux-musl
+          - mipsel-unknown-linux-gnu
+          - mipsel-unknown-linux-musl
+          - mips64-unknown-linux-gnuabi64
+          - mips64-unknown-linux-muslabi64
+          - mips64el-unknown-linux-gnuabi64
+          - mips64el-unknown-linux-muslabi64
         os: [ubuntu-22.04]
         cross: [true]
         include:
@@ -51,27 +59,36 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
             toolchain: nightly
-            targets: ${{ matrix.target }}
-      - name: export cflags
-        if: matrix.target == 'aarch64-apple-ios'
-        run: echo "IPHONEOS_DEPLOYMENT_TARGET=17.5" >> $GITHUB_ENV
+            targets: ${{ matrix.cross && 'x86_64-unknown-linux-gnu' || matrix.target }}
       - name: install cross
         if: ${{ matrix.cross }}
         run: cargo install cross --git https://github.com/cross-rs/cross
+      - name: export cflags
+        if: matrix.target == 'aarch64-apple-ios'
+        run: echo "IPHONEOS_DEPLOYMENT_TARGET=17.5" >> $GITHUB_ENV
       - name: build cross
-        if: ${{ matrix.cross }}
+        if: ${{ matrix.cross && !contains(matrix.target, 'mips') }}
         run: cross build --release -p kaminari-cmd --target=${{ matrix.target }}
+      - name: build cross-mips
+        if: ${{ matrix.cross && contains(matrix.target, 'mips') }}
+        run: RUSTFLAGS='-C target-feature=-crt-static' cross build --profile=release-thin --no-default-features --features tls-ring -p kaminari-cmd --target=${{ matrix.target }}
       - name: build native
         if: ${{ !matrix.cross }}
         run: cargo build --release -p kaminari-cmd --target=${{ matrix.target }}
       - name: pack unix
-        if: "!contains(matrix.target, 'windows')"
+        if: ${{ !contains(matrix.target, 'windows') && !contains(matrix.target, 'mips') }}
         run: |
           mkdir -p build-${{ matrix.target }}
           cd build-${{ matrix.target }}
           tar -C ../target/${{ matrix.target }}/release -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris kaminaric
+      - name: pack unix-mips
+        if: ${{ contains(matrix.target, 'mips') }}
+        run: |
+          mkdir -p build-${{ matrix.target }}
+          cd build-${{ matrix.target }}
+          tar -C ../target/${{ matrix.target }}/release-thin -zcf kaminari-${{ matrix.target }}.tar.gz kaminaris kaminaric
       - name: pack windows
-        if: "contains(matrix.target, 'windows')"
+        if: ${{ contains(matrix.target, 'windows') }}
         run: |
           mkdir -p build-${{ matrix.target }}
           cd build-${{ matrix.target }}
