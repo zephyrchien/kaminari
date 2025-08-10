@@ -22,7 +22,7 @@ pub fn install_provider() {
             .expect("failed to install ring provider")
     }
 
-    #[cfg(not(feature = "tls-ring"))]
+    #[cfg(feature = "tls-awslc")]
     {
         rustls::crypto::aws_lc_rs::default_provider()
             .install_default()
@@ -491,11 +491,10 @@ mod utils {
             priv_key: &PrivateKeyDer,
             ocsp: Option<Vec<u8>>,
         ) -> Arc<AlwaysResolvesChain> {
-            // this is for ring
-            #[cfg(feature = "tls-ring")]
-            use rustls::crypto::ring as crypto;
-            #[cfg(not(feature = "tls-ring"))]
+            #[cfg(feature = "tls-awslc")]
             use rustls::crypto::aws_lc_rs as crypto;
+            #[cfg(all(feature = "tls-ring", not(feature = "tls-awslc")))]
+            use rustls::crypto::ring as crypto;
 
             let key = crypto::sign::any_supported_type(priv_key).expect("invalid key");
             Arc::new(AlwaysResolvesChain(Arc::new(sign::CertifiedKey {

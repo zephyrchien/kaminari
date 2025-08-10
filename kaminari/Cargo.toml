@@ -1,6 +1,6 @@
 [package]
 name = "kaminari"
-version = "0.13.3"
+version = "0.14.0"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 keywords = ["lightws", "network"]
@@ -15,8 +15,9 @@ all = ["ws", "uot", "tls", "mix"]
 mix = ["ws", "tls"]
 ws = ["lightws"]
 uot = ["udpflow"]
-tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen", "aws-lc-rs"]
-tls-ring = ["tls", "tokio-rustls/ring"]
+tls = ["tokio-rustls", "webpki-roots", "rustls-pemfile", "rcgen"]
+tls-ring = ["tls", "rcgen/ring", "tokio-rustls/ring"]
+tls-awslc = ["tls", "rcgen/aws_lc_rs", "tokio-rustls/aws_lc_rs", "aws-lc-rs"]
 
 [dependencies]
 # async rt
@@ -32,10 +33,10 @@ lightws = { version = "0.6", features = ["unsafe_auto_mask_write"], optional = t
 udpflow = { version = "0.1.0", optional = true }
 
 # tls
-tokio-rustls = { version = "0.26", features = ["early-data"], optional = true }
+tokio-rustls = { version = "0.26", default-features = false, features = ["tls12", "early-data"], optional = true }
 webpki-roots = { version = "1", optional = true }
 rustls-pemfile = { version = "2", optional = true }
-rcgen = { version = "0.14", optional = true }
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem"], optional = true }
 aws-lc-rs = { version = "1", features = ["bindgen"], optional = true } # this is for build
 
 [package.metadata.docs.rs]
