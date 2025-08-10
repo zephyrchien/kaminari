@@ -1,6 +1,6 @@
 [package]
 name = "kaminari-cmd"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 authors = ["zephyr <i@zephyr.moe>"]
 repository = "https://github.com/zephyrchien/kaminari/cmd"
@@ -12,7 +12,7 @@ license = "GPL-3.0"
 anyhow = "1"
 realm_io = "0.5.1"
 realm_syscall = "0.1.6"
-kaminari = { version = "0.13", features = ["ws"] }
+kaminari = { version = "0.14", features = ["ws"] }
 tokio = { version = "1.9", features = ["rt", "net", "macros"] }
 
 [[bin]]
@@ -24,7 +24,8 @@ name = "kaminaris"
 path = "src/server.rs"
 
 [features]
-default = ["tls"]
+default = ["tls", "tls-awslc"]
 tls = ["kaminari/tls"]
-tls-ring = ["kaminari/tls-ring"]
+tls-ring = ["tls", "kaminari/tls-ring"]
+tls-awslc = ["tls", "kaminari/tls-awslc"]
 tls-openssl = []
